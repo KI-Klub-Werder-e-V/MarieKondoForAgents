@@ -1,0 +1,36 @@
+schema: spec-driven
+
+context: |
+  Project: MarieKondoFürAgenten ("KonMari-Kit"), open-source software published by the
+  KI Klub Werder e.V. GitHub organization (non-profit association, community maintained).
+  A toolkit plus repeatable method that makes ONE pilot use case's organizational data agent-ready
+  (KonMari for data: commit, imagine the ideal, discard first, tidy by category, sensible order,
+  "does it spark joy for agents?" test). Source brief: research/00-quelle.md.
+  Users: any organization (SMEs, associations, public bodies, esp. German/EU) running it themselves,
+  or volunteers/consultants helping them; their data owners, domain experts and compliance
+  (DSGVO / EU AI Act apply). No vendor lock-in, no proprietary dependencies, self-hostable,
+  documentation that non-experts can follow, contributions via GitHub issues/PRs.
+  Default stack (open source, self-hostable, overridable per change design): Python 3.12 CLI
+  `konmari`, Postgres as the readiness catalog (DuckDB allowed for local runs), connectors for
+  SharePoint/M365, CRMs, file shares and SQL warehouses, MCP servers as the agent interface,
+  OpenLineage-style lineage events. Every pipeline step writes auditable decisions to the catalog.
+  Change order follows the KonMari sequence: 01 pilot charter → 09 evaluation & monitoring.
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
