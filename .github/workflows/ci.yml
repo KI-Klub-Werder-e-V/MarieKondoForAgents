@@ -6,11 +6,12 @@ jobs:
     services:
       postgres:
         image: postgres:16
-        env: {POSTGRES_USER: konmari, POSTGRES_PASSWORD: konmari, POSTGRES_DB: postgres}
+        # trust auth: the kit refuses SQL locators with embedded passwords
+        env: {POSTGRES_USER: konmari, POSTGRES_HOST_AUTH_METHOD: trust, POSTGRES_DB: postgres}
         ports: ["5432:5432"]
         options: --health-cmd pg_isready --health-interval 5s --health-retries 10
     env:
-      KONMARI_TEST_PG_URL: postgresql://konmari:konmari@localhost:5432/postgres
+      KONMARI_TEST_PG_URL: postgresql://konmari@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
