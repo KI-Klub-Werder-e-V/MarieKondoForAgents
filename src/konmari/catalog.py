@@ -69,6 +69,11 @@ class Catalog:
                 cur.execute(extra.read_text())
             self.execute("INSERT INTO schema_migration (name, applied_at) VALUES (?, ?)", (f, now()))
 
+    def rollback(self, name: str) -> None:
+        """Undo one migration with its .down.sql file (new tables only; source systems are never touched)."""
+        self.conn.cursor().execute((files("konmari") / "migrations" / name.replace(".sql", ".down.sql")).read_text())
+        self.execute("DELETE FROM schema_migration WHERE name = ?", (name,))
+
     def close(self) -> None:
         self.conn.close()
 
@@ -105,3 +110,10 @@ def audit(cat: Catalog, action: str, *, actor: str | None = None, charter_id=Non
         (new_id(), now(), actor or os_user(), action, charter_id, charter_version, step, result,
          json.dumps(details or {}, sort_keys=True, default=str)),
     )
+
+
+def audit_change(cat: Catalog, action: str, entity: str, previous, new, *, actor: str | None = None,
+                 reason: str | None = None, charter_id=None, step=None, result="recorded", **extra) -> None:
+    """Audit one decision as actor, timestamp, entity, previous value, new value and reason."""
+    audit(cat, action, actor=actor, charter_id=charter_id, step=step, result=result,
+          details={"entity": entity, "previous": previous, "new": new, "reason": reason, **extra})

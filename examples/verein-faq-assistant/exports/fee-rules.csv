@@ -1,0 +1,3 @@
+asset_uri,title,system_type,owner,steward,update_frequency,last_modified,format,size,sensitivity_tier,personal_data_categories,ropa_ref,access_rights_note
+crm://vereinsverwaltung/beitragsordnung,Beitragsordnung 2026,crm,ben,clara,P1Y,2026-01-05,application/pdf,1,internal,,,office volunteers read; board edits
+crm://vereinsverwaltung/beitragssaetze,Beitragssätze je Abteilung,crm,ben,clara,P1Y,2026-01-05,table,12,internal,,,office volunteers read

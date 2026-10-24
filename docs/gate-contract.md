@@ -55,3 +55,17 @@ sc.stakeholders["ben"]                  # register entry (name, contact, roles)
 ## Audit trail
 
 Write your own decisions with `konmari.catalog.audit(cat, action, actor=..., charter_id=..., charter_version=..., step=..., result=..., details={...})`. `audit_event` is append-only. The catalog layer refuses `UPDATE`, `DELETE` and `TRUNCATE` on it, and on Postgres a trigger refuses them too. c07 adds hash chaining.
+
+## Category sequence and step order (from c02)
+
+Steps 03–09 work category by category, in the approved order, and call `require_step` before they process a category:
+
+```python
+from konmari.categories import StepRefused, handoff, require_step
+
+require_step("kb-and-sops", "score", charter_path="charter.yaml", catalog=None)  # raises StepRefused(reasons)
+```
+
+It refuses when the previous KonMari step is not `complete` for that category, when no category order is approved, or when an earlier category in the order has not finished this step and no approver recorded a waiver (`konmari categories step <category> <step> --waive --reason ...`). Categories without accepted assets never hold up later ones. A step marks its own progress with `konmari.categories.store.set_step(cat, scope, category, step, "in_progress" | "complete", actor)`; every change is audited.
+
+`readiness-scorecard` (c03) reads the sequence with `handoff(cat, scope)`. It returns `(categories, [])`, or `(None, reasons)` with `category order not approved`, unassigned assets (no accepted primary category) and incomplete inventory records. Passing completes the `inventory` step for every in-scope category. Overlap hints for c04 come from `konmari.categories.store.overlap_hints(cat, scope, category)`.

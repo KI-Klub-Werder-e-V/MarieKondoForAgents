@@ -16,14 +16,14 @@ def test_migrations_apply_on_duckdb(tmp_path):
     cat = connect(f"duckdb:///{tmp_path}/c.duckdb")
     assert set(TABLES) <= _tables(cat)
     cat.migrate()  # idempotent
-    assert len(cat.query("SELECT * FROM schema_migration")) == 1
+    assert len(cat.query("SELECT * FROM schema_migration")) == 2  # c01, c02
 
 
 def test_migrations_apply_on_postgres(pg_url):
     cat = connect(pg_url)
     assert set(TABLES) <= _tables(cat)
     cat.migrate()
-    assert len(cat.query("SELECT * FROM schema_migration")) == 1
+    assert len(cat.query("SELECT * FROM schema_migration")) == 2  # c01, c02
 
 
 def test_canonical_hash_ignores_key_order_and_whitespace():
@@ -59,6 +59,9 @@ def test_audit_update_and_delete_refused_postgres(pg_url):
 @pytest.mark.parametrize("group,cmds", [
     ("charter", ["init", "validate", "approve", "amend", "show", "diff", "log", "status", "gate"]),
     ("metrics", ["validate", "approve", "amend", "baseline", "measure", "report"]),
+    ("inventory", ["source", "scan", "import", "set", "tier", "waive", "report", "export"]),
+    ("categories", ["suggest", "assign", "accept", "reject", "demote", "revert", "show", "add", "rename", "retire",
+                    "order", "approve", "handoff", "step"]),
 ])
 def test_help_lists_all_subcommands(group, cmds):
     import subprocess

@@ -1,0 +1,128 @@
+{
+  "_comment": "Synthetic Microsoft Graph v1.0 responses in recorded form (URL -> body) for a fictional support site. Phase 'scan2' is the delta after a file and the 'Richtlinien' library were deleted.",
+  "scan1": {
+    "https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com:/sites/support": {
+      "id": "contoso.sharepoint.com,1111aaaa-0000-4000-8000-000000000001,2222bbbb-0000-4000-8000-000000000002",
+      "displayName": "Support"
+    },
+    "https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com,1111aaaa-0000-4000-8000-000000000001,2222bbbb-0000-4000-8000-000000000002/drives": {
+      "value": [
+        {
+          "id": "b!docs",
+          "name": "Shared Documents",
+          "driveType": "documentLibrary",
+          "webUrl": "https://contoso.sharepoint.com/sites/support/Shared%20Documents"
+        },
+        {
+          "id": "b!pol",
+          "name": "Richtlinien",
+          "driveType": "documentLibrary",
+          "webUrl": "https://contoso.sharepoint.com/sites/support/Richtlinien"
+        }
+      ]
+    },
+    "https://graph.microsoft.com/v1.0/drives/b!docs/root/delta": {
+      "value": [
+        {
+          "id": "rootD",
+          "name": "root",
+          "root": {},
+          "folder": {
+            "childCount": 3
+          }
+        },
+        {
+          "id": "f1",
+          "name": "tickets-2025.csv",
+          "lastModifiedDateTime": "2026-01-10T08:00:00Z",
+          "file": {
+            "mimeType": "text/csv",
+            "hashes": {
+              "quickXorHash": "q1"
+            }
+          }
+        }
+      ],
+      "@odata.nextLink": "https://graph.microsoft.com/v1.0/drives/b!docs/root/delta?$skiptoken=page2"
+    },
+    "https://graph.microsoft.com/v1.0/drives/b!docs/root/delta?$skiptoken=page2": {
+      "value": [
+        {
+          "id": "f2",
+          "name": "tickets-2024.csv",
+          "lastModifiedDateTime": "2026-02-01T09:30:00Z",
+          "file": {
+            "mimeType": "text/csv",
+            "hashes": {
+              "quickXorHash": "q2"
+            }
+          }
+        },
+        {
+          "id": "f3",
+          "name": "faq.md",
+          "lastModifiedDateTime": "2025-11-05T12:00:00Z",
+          "file": {
+            "mimeType": "text/markdown",
+            "hashes": {
+              "quickXorHash": "q3"
+            }
+          }
+        }
+      ],
+      "@odata.deltaLink": "https://graph.microsoft.com/v1.0/drives/b!docs/root/delta?token=d1"
+    },
+    "https://graph.microsoft.com/v1.0/drives/b!pol/root/delta": {
+      "value": [
+        {
+          "id": "rootP",
+          "name": "root",
+          "root": {},
+          "folder": {
+            "childCount": 1
+          }
+        },
+        {
+          "id": "p1",
+          "name": "Reisekostenrichtlinie_2025.pdf",
+          "lastModifiedDateTime": "2025-12-01T10:00:00Z",
+          "file": {
+            "mimeType": "application/pdf",
+            "hashes": {
+              "sha256Hash": "9F86D081884C7D659A2FEAA0C55AD015A3BF4F1B2B0B822CD15D6C15B0F00A08"
+            }
+          }
+        }
+      ],
+      "@odata.deltaLink": "https://graph.microsoft.com/v1.0/drives/b!pol/root/delta?token=p1"
+    },
+    "https://graph.microsoft.com/v1.0/drives/b!docs/items/f1/content": "ticket;von;text\n1;kunde1@example.org;Passwort vergessen\n2;kunde2@example.org;Rechnung fehlt\n",
+    "https://graph.microsoft.com/v1.0/drives/b!docs/items/f2/content": "ticket;von;text\n3;kunde3@example.org;Termin verschieben\n",
+    "https://graph.microsoft.com/v1.0/drives/b!docs/items/f3/content": "# FAQ\nWie setze ich mein Passwort zurueck?\n"
+  },
+  "scan2": {
+    "https://graph.microsoft.com/v1.0/drives/b!docs/root/delta?token=d1": {
+      "value": [
+        {
+          "id": "f2",
+          "deleted": {
+            "state": "deleted"
+          }
+        }
+      ],
+      "@odata.deltaLink": "https://graph.microsoft.com/v1.0/drives/b!docs/root/delta?token=d2"
+    },
+    "https://graph.microsoft.com/v1.0/drives/b!pol/root/delta?token=p1": {
+      "value": [
+        {
+          "id": "rootP",
+          "root": {},
+          "deleted": {
+            "state": "deleted"
+          }
+        }
+      ],
+      "@odata.deltaLink": "https://graph.microsoft.com/v1.0/drives/b!pol/root/delta?token=p2"
+    }
+  }
+}

@@ -34,6 +34,22 @@ konmari metrics report --format json              # Stand je Kennzahl und Pilot-
 konmari charter gate --step inventory               # Freigabe-Prüfung für spätere Schritte (Exit 0 = ok)
 ```
 
+Schritt 2, Inventur und Kategorien (Anleitung: [docs/inventory-guide.de.md](docs/inventory-guide.de.md)):
+
+```
+konmari inventory source add --connector sql --locator <url> --secret-ref env:PW --as <id>  # nur Quellen aus der Charta
+konmari inventory scan                              # nur lesend; Personendaten-Hinweise lokal (Presidio)
+konmari inventory import <datei.csv> --as <id>      # Systeme ohne Konnektor
+konmari inventory set <asset> --owner <id> --update-frequency P1M --as <id>
+konmari inventory tier <asset> --confirm --as <id>  # Schutzstufe bestätigen (oder --set ... --reason ...)
+konmari inventory report --gate                     # Vollständigkeit (auch: --csv, waive, export als DCAT)
+konmari categories suggest --as <id>                # Vorschläge, dann accept/assign/reject/revert
+konmari categories order --propose --as <id>        # Reihenfolge nach Risiko, dann categories approve
+konmari categories handoff                          # Übergabe an Schritt 3 (Exit 0 = ok)
+```
+
+Für die Personendaten-Hinweise einmal das Sprachmodell laden: `uv run python -m spacy download de_core_news_lg`. SMB-Ablagen: `uv sync --extra smb`.
+
 Der Katalog liegt standardmäßig in `.konmari/catalog.duckdb`. Für Postgres 16: `uv sync --extra postgres` und `KONMARI_CATALOG=postgresql://...` oder `--catalog`. Schnittstelle für spätere Changes: [docs/gate-contract.md](docs/gate-contract.md). Tests: `uv run pytest -q`.
 
 Die Changes werden der Reihe nach umgesetzt, beginnend mit `c01-pilot-charter`:
