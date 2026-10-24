@@ -2067,6 +2067,10 @@ def build_parser() -> argparse.ArgumentParser:
     q = gcmd(gvs, "ropa", govern_ropa, "prefilled DSGVO Art. 30 record entry for the pilot agent", actor=None)
     q.add_argument("-o", "--output", default="ropa-entry.yaml")
     gcmd(gvs, "config", govern_config, "validate governance.yaml (retention, thresholds)", actor=None)
+
+    from konmari.connect import cli as connect_cli
+
+    connect_cli.register(groups, ccmd)
     return p
 
 

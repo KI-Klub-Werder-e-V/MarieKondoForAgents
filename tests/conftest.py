@@ -415,3 +415,33 @@ def spans():
     provider.add_span_processor(SimpleSpanProcessor(exp))
     trace.set_tracer_provider(provider)
     return exp
+
+
+# ---------------------------------------------------------------- c08 fixtures
+
+@pytest.fixture(scope="session")
+def c08_template(tmp_path_factory, blank_nlp_model):
+    """The governed c07 catalog of c08_fixture, built once; tests get a copy through `c08`."""
+    import c08_fixture as fx
+
+    db = tmp_path_factory.mktemp("c08") / "catalog.duckdb"
+    cat = connect(f"duckdb:///{db}")
+    fx.governed(cat, fx.scope())
+    cat.close()
+    return db
+
+
+@pytest.fixture
+def c08(c08_template, tmp_path, monkeypatch):
+    """A fresh copy of the governed catalog (as $KONMARI_CATALOG) plus a synthetic SQLite source."""
+    import c08_fixture as fx
+
+    db = tmp_path / "catalog.duckdb"
+    shutil.copy(c08_template, db)
+    monkeypatch.setenv("KONMARI_CATALOG", f"duckdb:///{db}")
+    monkeypatch.setenv("KONMARI_LINEAGE_FILE", str(tmp_path / "lineage.jsonl"))
+    monkeypatch.delenv("KONMARI_LINEAGE_URL", raising=False)
+    c = connect(f"duckdb:///{db}")
+    yield {"cat": c, "sc": fx.scope(), "loc": fx.source_db(tmp_path / "source.db"), "tmp": tmp_path,
+           "url": f"duckdb:///{db}"}
+    c.close()

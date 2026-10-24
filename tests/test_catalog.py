@@ -16,14 +16,14 @@ def test_migrations_apply_on_duckdb(tmp_path):
     cat = connect(f"duckdb:///{tmp_path}/c.duckdb")
     assert set(TABLES) <= _tables(cat)
     cat.migrate()  # idempotent
-    assert len(cat.query("SELECT * FROM schema_migration")) == 7  # c01-c07
+    assert len(cat.query("SELECT * FROM schema_migration")) == 8  # c01-c08
 
 
 def test_migrations_apply_on_postgres(pg_url):
     cat = connect(pg_url)
     assert set(TABLES) <= _tables(cat)
     cat.migrate()
-    assert len(cat.query("SELECT * FROM schema_migration")) == 7  # c01-c07
+    assert len(cat.query("SELECT * FROM schema_migration")) == 8  # c01-c08
 
 
 def test_canonical_hash_ignores_key_order_and_whitespace():

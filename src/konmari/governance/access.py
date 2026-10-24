@@ -166,14 +166,15 @@ def invoke(ctx: Context):
     return span("invoke_agent", ctx.agent, **{"gen_ai.agent.id": ctx.agent})
 
 
-def _event(cat, ctx: Context, tool, operation, ids, decision, reason, versions, trace_id):
+def _event(cat, ctx: Context, tool, operation, ids, decision, reason, versions, trace_id, extra=None):
     write_event(cat, "agent.tool_call", actor=ctx.agent, result=decision, trace_id=trace_id, agent=ctx.agent,
                 on_behalf_of=ctx.on_behalf_of or "none", tool=tool, operation=operation, resource_ids=ids,
-                decision=decision, reason=reason, policy_versions=versions)
+                decision=decision, reason=reason, policy_versions=versions, **(extra or {}))
 
 
-def tool_call(cat: Catalog, ctx: Context, tool: str, operation: str, fn):
-    """Run `fn() -> (data, resource_ids)` and audit it; no data is returned unless the audit event is persisted."""
+def tool_call(cat: Catalog, ctx: Context, tool: str, operation: str, fn, extra: dict | None = None):
+    """Run `fn() -> (data, resource_ids)` and audit it; no data is returned unless the audit event is persisted.
+    `extra`: more payload-free fields for the event (c08: product, version, record count); `fn` may fill it."""
     versions = {c: v for c, v in pol.active_versions(cat).items() if c in ctx.categories + ctx.write_categories}
     with span("execute_tool", tool, **{"gen_ai.tool.name": tool, "gen_ai.agent.id": ctx.agent}) as s:
         trace_id = f"{s.get_span_context().trace_id:032x}" if s.get_span_context().is_valid else None
@@ -182,12 +183,12 @@ def tool_call(cat: Catalog, ctx: Context, tool: str, operation: str, fn):
         except AccessDenied as e:
             s.set_attribute("error.type", e.reason)
             try:
-                _event(cat, ctx, tool, operation, [], "deny", e.reason, versions, trace_id)
+                _event(cat, ctx, tool, operation, [], "deny", e.reason, versions, trace_id, extra)
             except Exception as err:
                 raise AuditUnavailable(f"audit write failed: {err}") from err
             raise
         try:
-            _event(cat, ctx, tool, operation, ids, "allow", None, versions, trace_id)
+            _event(cat, ctx, tool, operation, ids, "allow", None, versions, trace_id, extra)
         except Exception as err:
             s.set_attribute("error.type", "audit_unavailable")
             raise AuditUnavailable(f"audit write failed; tool call refused: {err}") from err

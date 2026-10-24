@@ -12,6 +12,8 @@ jobs:
         options: --health-cmd pg_isready --health-interval 5s --health-retries 10
     env:
       KONMARI_TEST_PG_URL: postgresql://konmari@localhost:5432/postgres
+      # c08 task 8.2: the official MCP Inspector against both pinned protocol revisions (npx is on the runner)
+      KONMARI_TEST_INSPECTOR: "1"
       # c04 archive target test against MinIO (S3-compatible); throwaway CI credentials
       AWS_ACCESS_KEY_ID: konmari
       AWS_SECRET_ACCESS_KEY: konmari-ci-only

@@ -112,9 +112,22 @@ konmari govern check --as <id>                      # Leck-Test und Freigabe je 
 konmari audit verify                                # ein Prüfprotokoll für alle Schritte (auch: export, purge)
 ```
 
+Schritt 8, Anbinden (Anleitung: [docs/connect-guide.de.md](docs/connect-guide.de.md)):
+
+```
+konmari product init <id> --category <kategorie> --owner <id> --use-case "<anwendungsfall>"   # ODPS + ODCS anlegen
+konmari product lint products/<id> --as <id>        # Schemas, Pflichtangaben, Vorstufen; legt den Entwurf an
+konmari product refresh <id> --as <id>              # geänderte Zeilen laden, testen, erst dann übernehmen (auch: all)
+konmari product test <id>                           # Qualitätsregeln (auch: diff products/<id> für die Semver-Prüfung)
+konmari product approve <id> --version 1.0.0 --as <owner>    # dann product publish <id> --version 1.0.0 --as <owner>
+konmari product publish <id> --rollback --reason "..." --as <owner>   # auch: deprecate, list --json, schedule
+konmari serve --check-pins                          # neue Werkzeuge prüfen, dann serve --approve-tool <name> --as <id>
+konmari serve --stdio                               # MCP-Server für einen lokalen Agenten (oder --http mit OAuth)
+```
+
 Für die Personendaten-Hinweise einmal die Sprachmodelle laden: `uv run python -m spacy download de_core_news_lg` (Schritt 7 zusätzlich `en_core_web_lg`). SMB-Ablagen: `uv sync --extra smb`. Semantische Dubletten: `uv sync --extra semantic`, S3-Archiv: `uv sync --extra s3`, Docling-Parser: `uv sync --extra docling`.
 
-Der Katalog liegt standardmäßig in `.konmari/catalog.duckdb`. Für Postgres 16: `uv sync --extra postgres` und `KONMARI_CATALOG=postgresql://...` oder `--catalog`. Schnittstelle für spätere Changes: [docs/gate-contract.md](docs/gate-contract.md), [docs/enrich-contract.md](docs/enrich-contract.md), [docs/governance-contract.md](docs/governance-contract.md). Tests: `uv run pytest -q`.
+Der Katalog liegt standardmäßig in `.konmari/catalog.duckdb`. Für Postgres 16: `uv sync --extra postgres` und `KONMARI_CATALOG=postgresql://...` oder `--catalog`. Schnittstelle für spätere Changes: [docs/gate-contract.md](docs/gate-contract.md), [docs/enrich-contract.md](docs/enrich-contract.md), [docs/governance-contract.md](docs/governance-contract.md), [docs/connect-contract.md](docs/connect-contract.md). Tests: `uv run pytest -q`.
 
 Die Changes werden der Reihe nach umgesetzt, beginnend mit `c01-pilot-charter`:
 
