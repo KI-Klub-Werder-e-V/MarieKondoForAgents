@@ -233,12 +233,14 @@ def decide(cat: Catalog, sc: Scope, term_id: str, actor: str, approve: bool, com
         raise Refused(f"'{actor}' wrote version {cur['version']} of '{term_id}' and cannot {what} it (four eyes); "
                       "another steward must decide")
     if approve and (m := cur["content"].get("metric")) is not None:
-        if missing := [f for f in METRIC_FIELDS if not (m or {}).get(f)]:
+        m = {**(m or {}), "formula": (m or {}).get("formula") or (m or {}).get("query")}  # spec: formula or source query
+        if missing := [f for f in METRIC_FIELDS if not m.get(f)]:
             raise Refused([f"metric definition: missing field '{f}'" for f in missing])
     _set_status(cat, term_id, cur["version"], "approved" if approve else "rejected", actor, comment)
     if approve:
         cat.execute("UPDATE glossary_term SET exposed_version = ? WHERE term_id = ?", (cur["version"], term_id))
         if m := cur["content"].get("metric"):
+            m = {**m, "formula": m.get("formula") or m.get("query")}
             cat.execute("INSERT INTO glossary_metric VALUES (?, ?, ?, ?, ?, ?, ?)",
                         (term_id, cur["version"], m["formula"], m["grain"], m["unit"], m["owner"], now()))
     log(cat, sc, f"glossary.{what}", f"term:{term_id}", {"status": "in_review", "exposed": t["exposed_version"]},

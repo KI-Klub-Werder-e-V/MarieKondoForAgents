@@ -182,6 +182,15 @@ def test_metric_definition_complete(g):
     assert ("metric", tid) in {(x["kind"], x["target"]) for x in gl.links(cat, tid)}
 
 
+def test_metric_with_source_query_instead_of_formula(g):
+    cat, sc = g["cat"], g["sc"]
+    tid = term(cat, sc, "Mitgliederzahl", metric={"query": "SELECT COUNT(*) FROM mitglied", "grain": "month",
+                                                  "unit": "Personen", "owner": "ben"})
+    gl.submit(cat, sc, tid, "ben")
+    gl.decide(cat, sc, tid, "clara", True)
+    assert cat.one("SELECT formula FROM glossary_metric WHERE term_id = ?", (tid,))["formula"].startswith("SELECT")
+
+
 # ---------------------------------------------------------------- 4.6 conflicts
 
 def _two_tables(g):
