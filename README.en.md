@@ -8,7 +8,7 @@
   <img alt="GDPR-aware" src="https://img.shields.io/badge/GDPR-aware-1a7a83">
 </p>
 
-# MarieKondoFürAgenten
+# MarieKondo&shy;FürAgenten
 
 **Your agent is only as good as the filing cabinet it reads from.**
 

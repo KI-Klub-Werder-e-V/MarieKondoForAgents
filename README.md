@@ -8,7 +8,7 @@
   <img alt="DSGVO-bewusst" src="https://img.shields.io/badge/DSGVO-bewusst-1a7a83">
 </p>
 
-# MarieKondoFürAgenten
+# MarieKondo&shy;FürAgenten
 
 **Euer Agent ist nur so gut wie die Ablage, aus der er liest.**
 
