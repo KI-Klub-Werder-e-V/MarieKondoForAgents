@@ -9,9 +9,15 @@ dependencies = [
     "datasketch==2.0.0",
     "duckdb==2.0.0",
     "jsonschema==4.26.0",
+    "openlineage-python==1.54.0",
+    "phonenumbers==9.0.41",
+    "pint==0.25.3",
     "presidio-analyzer==2.2.364",
+    "python-stdnum==2.2",
     "PyYAML==6.0.3",
+    "splink==5.0.0",
     "sqlalchemy==2.1.6",
+    "ucumvert==0.3.2",
 ]
 
 [project.optional-dependencies]

@@ -49,6 +49,13 @@ class Catalog:
         cur.execute(sql, params)
         return cur
 
+    def many(self, sql: str, rows: list, chunk: int = 500) -> None:
+        """INSERT ... VALUES (?, ...) for many rows, sent as multi-row statements (executemany is slow on DuckDB)."""
+        head, _, tpl = sql.rpartition("VALUES")
+        for i in range(0, len(rows), chunk):
+            part = rows[i:i + chunk]
+            self.execute(f"{head}VALUES {', '.join([tpl.strip()] * len(part))}", [x for r in part for x in r])
+
     def query(self, sql: str, params=()) -> list[dict]:
         cur = self.execute(sql, params)
         cols = [d[0] for d in cur.description]

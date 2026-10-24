@@ -1,0 +1,17 @@
+# Synthetic pilot: ERP debtors (fictional).
+fields:
+  - {source: erp, field: debitor.name, entity: customer, attribute: legal_name, type: name, owner: ben,
+     parser: {transliterate_de: true, strip_legal_forms: true}}
+  - {source: erp, field: debitor.ustid, entity: customer, attribute: vat_id, type: identifier, owner: ben,
+     parser: {kind: de.vat}}
+  - {source: erp, field: debitor.tel, entity: customer, attribute: phone, type: phone, owner: ben,
+     parser: {region: DE}}
+  - {source: erp, field: debitor.plz, entity: customer, attribute: postcode, type: text, owner: ben}
+  - {source: erp, field: debitor.kontaktart, entity: customer, attribute: contact_preference, type: text, owner: ben}
+  - {source: erp, field: debitor.zahlungsbedingung, entity: customer, attribute: payment_terms, type: text, owner: ben}
+  - {source: erp, field: debitor.iban, entity: customer, attribute: iban, type: identifier, owner: ben,
+     parser: {kind: iban}}
+  - {source: erp, field: debitor.liefermenge, entity: customer, attribute: annual_volume, type: quantity, owner: ben,
+     parser: {target_unit: kg, decimal_comma: true, allowed_units: [kg, t, g]}}
+  - {source: erp, field: debitor.stand, entity: customer, attribute: updated_at, type: datetime, owner: ben,
+     parser: {pattern: ISO}}

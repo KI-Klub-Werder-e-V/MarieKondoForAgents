@@ -1,0 +1,11 @@
+# Synthetic pilot: SharePoint list of event customers (fictional).
+fields:
+  - {source: sharepoint, field: kundenliste.titel, entity: customer, attribute: legal_name, type: name, owner: ben,
+     parser: {transliterate_de: true, strip_legal_forms: true}}
+  - {source: sharepoint, field: kundenliste.telefon, entity: customer, attribute: phone, type: phone, owner: ben,
+     parser: {region: DE}}
+  - {source: sharepoint, field: kundenliste.plz, entity: customer, attribute: postcode, type: text, owner: ben}
+  - {source: sharepoint, field: kundenliste.menge, entity: customer, attribute: annual_volume, type: quantity,
+     owner: ben, parser: {target_unit: kg, vocabulary: ucum}}
+  - {source: sharepoint, field: kundenliste.erstellt, entity: customer, attribute: updated_at, type: datetime,
+     owner: ben, parser: {epoch_unit: ms}}

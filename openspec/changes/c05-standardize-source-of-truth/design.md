@@ -96,4 +96,12 @@ rows by `run_id`. Raw values are untouched, so rollback loses no data.
 - Should golden records live only in the catalog, or also be materialized into the warehouse for 08?
 - Which ticketing system receives write-back tickets (GitHub issues, Jira, plain CSV)? Default: a free-text reference.
 - Is an existence check for VAT IDs (EU VIES) wanted, and how does it fit DSGVO data minimisation?
-- Confirm the `phonenumbers` API and the Splink 4 vs 5 choice in the first spike (R§1.2 and R§1.3 gaps).
+- ~~Confirm the `phonenumbers` API and the Splink 4 vs 5 choice in the first spike (R§1.2 and R§1.3 gaps).~~
+  Spike outcome (2026-10-24, task 1.2): `phonenumbers` 9.0.41 `parse(raw, "DE")` + `is_valid_number` +
+  `format_number(..., E164)` turns `030 1234567`, `030/1234567` and `+49 30 1234567` into `+49301234567`.
+  Splink 5.0.0 (pinned) works on an in-memory DuckDB with `Linker([db.register(pyarrow_table, dataset_display_name=src),
+  ...], SettingsCreator(link_type="link_only", ...))` and `linker.inference.predict(threshold_match_probability=...)`;
+  it needs no pandas. The kit configures fixed m/u probabilities per comparison instead of an EM training run, so scores
+  are deterministic and reviewable; the regression test pins the cluster counts on the synthetic fixture.
+  `ucumvert` 0.3.2 needs pint 0.25.x (it fails to load its definitions on pint 0.26), so pint is pinned to 0.25.3.
+  `python-stdnum` drops the `DE` prefix of German VAT IDs; the kit adds the country prefix back (`DE123456788`).

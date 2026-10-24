@@ -28,6 +28,11 @@ from konmari.inventory import lineage
 from konmari.inventory import sensitivity as sens
 from konmari.inventory import store as inv
 from konmari.metrics import store as ms
+from konmari.normalize import store as nst
+from konmari.policy import conflicts as pcf
+from konmari.policy import golden as pgold
+from konmari.policy import store as pst
+from konmari.resolve import linkage as erl
 from konmari.scorecard import engine as se
 from konmari.scorecard import probes as sp
 from konmari.scorecard import report as sr
@@ -838,6 +843,225 @@ def retention_check(a, cat_url):
     return 0
 
 
+# ---------------------------------------------------------------- standardize (c05)
+
+def _json(obj) -> None:
+    print(json.dumps(obj, indent=2, ensure_ascii=False, default=str))
+
+
+def normalize_run(a, cat_url):
+    if not a.records:
+        return _fail("--records is required (JSONL: source, object, record_id, values)")
+    cat = connect(cat_url)
+    _scope(a, cat)
+    rep = nst.run(cat, a.records, a.specs, a.as_ or "konmari-normalize")
+    if rep["skipped"]:
+        print(f"run {rep['run_id']} already done for this input and spec version {rep['spec_version']}; "
+              "nothing written")
+    else:
+        print(f"run {rep['run_id']} (spec version {rep['spec_version']}): {rep['canonical']} canonical, "
+              f"{rep['quarantined']} quarantined")
+    bad = [sf for sf, c in rep["conformance"].items() if not c["conformant"]]
+    for sf, c in rep["conformance"].items():
+        print(f"  {sf}: canonical {c['canonical_rate']:.1%}, quarantined {c['quarantine_rate']:.1%} "
+              f"{c['reasons'] or ''}")
+    return _fail([f"{sf}: {rep['conformance'][sf]['unaccounted']} unaccounted value(s)" for sf in bad]) if bad else 0
+
+
+def normalize_conformance(a, cat_url):
+    conf = nst.conformance(connect(cat_url), a.run)
+    _json(conf)
+    bad = [f"{sf}: {c['unaccounted']} unaccounted value(s)" for sf, c in conf.items() if not c["conformant"]]
+    return _fail(bad) if bad else 0
+
+
+def normalize_quarantine(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    if a.op == "list":
+        for q in nst.quarantine_list(cat, sc, a.as_, None if a.status == "all" else a.status):
+            print(f"{q['qid']} {q['status']} {q['source_field']} {q['record_id']}: {q['raw']!r} -> {q['reason']} "
+                  f"({q['detail']}; owner {q['owner']})")
+        return 0
+    if a.op == "resolve":
+        q = nst.resolve_quarantine(cat, sc, a.qid, a.as_, a.value, a.unfixable, a.spec_change, a.reason)
+    else:
+        q = nst.revert_quarantine(cat, sc, a.qid, a.as_, a.reason)
+    print(f"{q['qid']} is {q['status']}")
+    return 0
+
+
+def normalize_contract(a, cat_url):
+    cat = connect(cat_url)
+    if a.op == "export":
+        spec = nst.latest_spec(cat) or nst.load_specs(cat, a.specs, "konmari-contract")
+        text = dump_yaml(nst.odcs_contract(spec))
+        if a.output:
+            Path(a.output).write_text(text, encoding="utf-8")
+            print(f"wrote {a.output}")
+        else:
+            print(text, end="")
+        return 0
+    failures = nst.check_contract(cat, load_yaml(Path(a.contract)), a.run or nst.latest_run_id(cat))
+    if failures:
+        return _fail(failures)
+    print("all data-contract quality rules pass")
+    return 0
+
+
+def normalize_rollback(a, cat_url):
+    cat = connect(cat_url)
+    _scope(a, cat)
+    rep = nst.rollback(cat, a.run, a.as_, a.reason)
+    print(f"run {rep['run_id']} rolled back: {rep['values_removed']} canonical value(s) removed; raw data untouched")
+    return 0
+
+
+def resolve_run(a, cat_url):
+    cat = connect(cat_url)
+    rep = erl.run(cat, _scope(a, cat), a.entity, erl.load_config(a.config), a.as_)
+    print(f"run {rep['run_id']}: {rep['records']} records, {rep['auto']} auto-linked pair(s), {rep['review']} in the "
+          f"review queue, {rep['clusters']} cluster(s) (thresholds {rep['upper']} / {rep['lower']})")
+    return 0
+
+
+def resolve_review(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    if a.op == "list":
+        for r in erl.queue(cat, a.entity):
+            print(f"{r['probability']:.4f} {r['rec_a']} {r['rec_b']}")
+    elif a.op == "export":
+        print(f"{erl.export_review(cat, a.entity, a.output, a.sample)} pair(s) written to {a.output}; fill the label "
+              "column with match or non_match")
+    elif a.op == "import":
+        print(f"{erl.import_review(cat, sc, a.file, a.as_)} label(s) stored")
+    else:
+        lab = "match" if a.op == "accept" else "non_match"
+        erl.label_pairs(cat, sc, a.entity, [(a.rec_a, a.rec_b, lab)], a.as_, a.reason)
+        print(f"{a.rec_a} / {a.rec_b}: {lab}")
+    return 0
+
+
+def resolve_publish(a, cat_url):
+    cat = connect(cat_url)
+    rep = erl.publish(cat, _scope(a, cat), a.entity, a.as_, erl.read_known(a.known) if a.known else None,
+                      a.override_recall_reason)
+    print(f"published {a.entity}: precision {rep['precision']}, recall {rep['recall']} "
+          f"(floors {rep['floors']['precision']} / {rep['floors']['recall']})")
+    return 0
+
+
+def resolve_split(a, cat_url):
+    cat = connect(cat_url)
+    rep = erl.split(cat, _scope(a, cat), a.entity, a.cluster, a.records.split(","), a.as_, a.reason)
+    print(f"split {rep['split_id']}: {', '.join(rep['clusters'])} ({rep['links_cut']} link(s) cut)")
+    return 0
+
+
+def resolve_restore(a, cat_url):
+    cat = connect(cat_url)
+    rep = erl.restore(cat, _scope(a, cat), a.split, a.as_, a.reason)
+    print(f"restored {', '.join(rep['clusters'])}")
+    return 0
+
+
+def _exposure(path):
+    return pst.read_exposure(path) if path and Path(path).exists() else None
+
+
+def policy_load(a, cat_url):
+    cat = connect(cat_url)
+    row = pst.load(cat, _scope(a, cat), a.file, a.as_)
+    impact = json.loads(row["impact"])
+    print(f"policy {row['entity']} version {row['version']} is {row['status']}"
+          f"{' (active)' if row['active'] else ''}; dry run: {len(impact)} golden value(s) would change")
+    for i in impact[:a.show]:
+        print(f"  {i['cluster_id']} {i['field']}: {i['from']!r} -> {i['to']!r} ({i['status']})")
+    if len(impact) > a.show:
+        print(f"  ... {len(impact) - a.show} more (konmari policy load --show N)")
+    return 0
+
+
+def policy_approve(a, cat_url):
+    cat = connect(cat_url)
+    row = pst.approve(cat, _scope(a, cat), a.entity, a.version, a.as_)
+    print(f"policy {a.entity} version {row['version']} approved by {a.as_} and active")
+    return 0
+
+
+def policy_rollback(a, cat_url):
+    cat = connect(cat_url)
+    pst.rollback(cat, _scope(a, cat), a.entity, a.to, a.as_, a.reason)
+    print(f"policy {a.entity} rolled back to version {a.to}; golden records recomputed")
+    return 0
+
+
+def policy_check(a, cat_url):
+    cat = connect(cat_url)
+    exposed = _exposure(a.exposure)
+    if exposed is None:
+        return _fail(f"{a.exposure}: no exposure declaration (data-products / mcp-exposure fields)")
+    missing = [m for ms in pst.coverage(cat, exposed).values() for m in ms]
+    if missing:
+        return _fail([f"{m} is exposed to agents but has no precedence rule" for m in missing])
+    print("every agent-exposed field has a precedence rule")
+    return 0
+
+
+def policy_build(a, cat_url):
+    cat = connect(cat_url)
+    rep = pgold.build(cat, _scope(a, cat), a.entity, a.as_ or "konmari-golden", _exposure(a.exposure))
+    print(f"golden records for {a.entity} (policy version {rep['policy_version']}): {rep['clusters']} cluster(s), "
+          f"{rep['unresolved']} unresolved attribute(s)")
+    return 0
+
+
+def policy_golden(a, cat_url):
+    cat = connect(cat_url)
+    fields = [a.field] if a.field else [g["field"] for g in pgold.record(cat, a.entity, a.cluster)]
+    _json([pgold.serve(cat, a.entity, a.cluster, f) for f in fields])
+    return 0
+
+
+def conflicts_list(a, cat_url):
+    cat = connect(cat_url)
+    for c in pcf.listing(cat, _scope(a, cat), a.as_, a.status):
+        cands = "; ".join(f"{x['source']}={x['value']!r}" for x in c["candidates"])
+        print(f"{c['conflict_id']} {c['status']} {c['entity']}.{c['field']} {c['cluster_id']} [{cands}] owner "
+              f"{c['owner']}, due {c['due_date']}{', personal data' if c['personal_data'] else ''}")
+    return 0
+
+
+def conflicts_decide(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    if a.cmd == "revert":
+        c = pcf.revert(cat, sc, a.conflict, a.as_, a.reason)
+    else:
+        c = pcf.decide(cat, sc, a.conflict, a.as_, a.source, a.value, getattr(a, "ticket", None),
+                       a.reason if a.cmd == "accept" else None)
+    print(f"{c['conflict_id']} is {c['status']}")
+    return 0
+
+
+def conflicts_report(a, cat_url):
+    cat = connect(cat_url)
+    rows = pcf.overdue(cat) if a.overdue else pcf.entries(cat)
+    for c in rows:
+        print(f"{c['conflict_id']} {c['status']} {c['entity']}.{c['field']} owner {c['owner']} due {c['due_date']}"
+              + (f", {c['age_days']} days old" if a.overdue else "")
+              + (", personal data (DSGVO Art. 5(1)(d), Art. 16)" if c["personal_data"] else ""))
+    if not rows:
+        print("no overdue conflicts" if a.overdue else "conflict register is empty")
+    return 0
+
+
+def conflicts_export(a, cat_url):
+    print(f"{pcf.export_tickets(connect(cat_url), a.output)} write-back ticket(s) written to {a.output}")
+    return 0
+
+
 # ---------------------------------------------------------------- parser
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1170,6 +1394,125 @@ def build_parser() -> argparse.ArgumentParser:
     q = ccmd(res, "check", retention_check, "propose actions for items whose retention ends soon (incl. archive)")
     q.add_argument("--window-days", type=int, default=ddet.DEFAULTS["retention_window_days"])
     q.add_argument("--schedule", default=ddet.DEFAULTS["retention_schedule"], help="interval between checks (P7D)")
+
+    no = groups.add_parser("normalize", help="normalize in-scope fields by spec (raw kept), quarantine, conformance")
+    no.add_argument("--charter", default="charter.yaml", help="charter file (default: charter.yaml)")
+    no.add_argument("--as", dest="as_", metavar="STAKEHOLDER_ID")
+    no.add_argument("--records", help="JSONL records: {source, object, record_id, values}")
+    no.add_argument("--specs", default="normalize", help="spec directory or file (default: normalize/)")
+    no.set_defaults(fn=normalize_run)
+    nos = no.add_subparsers(dest="cmd")
+    qu = nos.add_parser("quarantine", help="values that could not be normalized").add_subparsers(dest="op",
+                                                                                                 required=True)
+    q = ccmd(qu, "list", normalize_quarantine, "list quarantined values (personal data masked)", actor="optional")
+    q.add_argument("--status", default="open", choices=["open", "resolved", "unfixable", "spec_change_requested",
+                                                        "all"])
+    q = ccmd(qu, "resolve", normalize_quarantine, "resolve as field owner: --value, --unfixable or --spec-change")
+    q.add_argument("qid")
+    q.add_argument("--value")
+    q.add_argument("--unfixable", action="store_true")
+    q.add_argument("--spec-change", action="store_true")
+    q.add_argument("--reason")
+    q = ccmd(qu, "revert", normalize_quarantine, "reopen a resolved entry and withdraw its manual value")
+    q.add_argument("qid")
+    q.add_argument("--reason")
+    q = nos.add_parser("conformance", help="per-field conformance of a run (exit 1 if values are unaccounted)")
+    q.add_argument("run")
+    q.set_defaults(fn=normalize_conformance)
+    ct = nos.add_parser("contract", help="ODCS data contract from the specs").add_subparsers(dest="op", required=True)
+    q = ct.add_parser("export", help="write the specs as an ODCS v3 contract with quality rules")
+    q.add_argument("--specs", default="normalize")
+    q.add_argument("-o", "--output")
+    q.set_defaults(fn=normalize_contract)
+    q = ct.add_parser("check", help="run the contract's quality rules against a run (CI)")
+    q.add_argument("contract")
+    q.add_argument("--run", help="default: the latest run")
+    q.set_defaults(fn=normalize_contract)
+    q = ccmd(nos, "rollback", normalize_rollback, "drop one run's canonical values (raw data untouched)")
+    q.add_argument("run")
+    q.add_argument("--reason", required=True)
+
+    rs = groups.add_parser("resolve", help="cross-source entity resolution, clerical review, publish, split")
+    rss = rs.add_subparsers(dest="cmd", required=True)
+    q = ccmd(rss, "run", resolve_run, "score cross-source pairs (Splink) and route them by the two thresholds")
+    q.add_argument("--entity", required=True)
+    q.add_argument("--config", default="resolve.yaml")
+    rv2 = rss.add_parser("review", help="clerical review of borderline pairs").add_subparsers(dest="op", required=True)
+    q = ccmd(rv2, "list", resolve_review, "the review queue, highest probability first", actor=None)
+    q.add_argument("--entity", required=True)
+    q = ccmd(rv2, "export", resolve_review, "CSV with the queue and a precision sample", actor=None)
+    q.add_argument("--entity", required=True)
+    q.add_argument("-o", "--output", default="review-pairs.csv")
+    q.add_argument("--sample", type=int, default=erl.DEFAULTS["sample"])
+    q = ccmd(rv2, "import", resolve_review, "store the labels of a filled-in CSV")
+    q.add_argument("file")
+    for name in ("accept", "reject"):
+        q = ccmd(rv2, name, resolve_review, f"{name} one pair")
+        q.add_argument("rec_a", help="source:record_id")
+        q.add_argument("rec_b")
+        q.add_argument("--entity", required=True)
+        q.add_argument("--reason")
+    q = ccmd(rss, "publish", resolve_publish, "release clusters to golden records if precision/recall meet floors")
+    q.add_argument("--entity", required=True)
+    q.add_argument("--known", help="CSV rec_a,rec_b of the owner's known duplicates (recall)")
+    q.add_argument("--override-recall-reason", help="publish without a known-duplicate list (data owner, audited)")
+    q = ccmd(rss, "split", resolve_split, "split a wrongly merged cluster")
+    q.add_argument("cluster")
+    q.add_argument("--entity", required=True)
+    q.add_argument("--records", required=True, help="comma-separated source:record_id of one part")
+    q.add_argument("--reason", required=True)
+    q = ccmd(rss, "restore", resolve_restore, "undo a split")
+    q.add_argument("split")
+    q.add_argument("--reason")
+
+    po = groups.add_parser("policy", help="source-of-truth policy: load, approve, rollback, coverage, golden records")
+    pos = po.add_subparsers(dest="cmd", required=True)
+    q = ccmd(pos, "load", policy_load, "store an edited policy as a pending version with a dry-run impact report")
+    q.add_argument("--file", required=True)
+    q.add_argument("--show", type=int, default=20, help="impact lines to print (default 20)")
+    q = ccmd(pos, "approve", policy_approve, "approve a pending version (field owner) and activate it")
+    q.add_argument("entity")
+    q.add_argument("--version", type=int, required=True)
+    q = ccmd(pos, "rollback", policy_rollback, "re-activate an earlier approved version")
+    q.add_argument("entity")
+    q.add_argument("--to", type=int, required=True)
+    q.add_argument("--reason", required=True)
+    q = ccmd(pos, "check", policy_check, "every agent-exposed field needs a rule (exit 1 lists the gaps)", actor=None)
+    q.add_argument("--exposure", default="exposure.yaml")
+    q = ccmd(pos, "build", policy_build, "build golden records with provenance and detect conflicts",
+             actor="optional")
+    q.add_argument("entity")
+    q.add_argument("--exposure", default="exposure.yaml")
+    q = pos.add_parser("golden", help="golden values with provenance and status (the agent-facing contract)")
+    q.add_argument("entity")
+    q.add_argument("cluster")
+    q.add_argument("--field")
+    q.set_defaults(fn=policy_golden)
+
+    co = groups.add_parser("conflicts", help="conflict register: list, resolve, accept, revert, overdue report")
+    cos = co.add_subparsers(dest="cmd", required=True)
+    q = ccmd(cos, "list", conflicts_list, "list conflicts (personal values masked without access)", actor="optional")
+    q.add_argument("--status", choices=["open", "resolved", "accepted_deviation", "reopened", "overridden"])
+    for name, help in [("resolve", "decide a conflict and name the write-back ticket"),
+                       ("accept", "accept the deviation at the source (reason required)")]:
+        q = ccmd(cos, name, conflicts_decide, help)
+        q.add_argument("conflict")
+        g = q.add_mutually_exclusive_group(required=True)
+        g.add_argument("--source", help="take this source's candidate value")
+        g.add_argument("--value", help="enter a corrected value")
+        if name == "resolve":
+            q.add_argument("--ticket", required=True, help="write-back ticket, e.g. IT-4711")
+        else:
+            q.add_argument("--reason", required=True)
+    q = ccmd(cos, "revert", conflicts_decide, "withdraw a decision and reopen the conflict")
+    q.add_argument("conflict")
+    q.add_argument("--reason")
+    q = cos.add_parser("report", help="conflict report; --overdue lists entries past their due date")
+    q.add_argument("--overdue", action="store_true")
+    q.set_defaults(fn=conflicts_report)
+    q = cos.add_parser("export-tickets", help="CSV of write-back tickets for the source owners")
+    q.add_argument("-o", "--output", default="write-back-tickets.csv")
+    q.set_defaults(fn=conflicts_export)
     return p
 
 

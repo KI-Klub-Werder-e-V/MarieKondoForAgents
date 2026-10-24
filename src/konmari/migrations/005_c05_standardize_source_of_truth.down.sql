@@ -1,0 +1,13 @@
+DROP TABLE standardize_metric;
+DROP TABLE conflict;
+DROP TABLE golden_attribute;
+DROP TABLE policy_rule;
+DROP TABLE policy_version;
+DROP TABLE crosswalk;
+DROP TABLE er_cluster;
+DROP TABLE er_pair;
+DROP TABLE er_run;
+DROP TABLE quarantine;
+DROP TABLE normalized_value;
+DROP TABLE normalize_run;
+DROP TABLE normalization_spec;

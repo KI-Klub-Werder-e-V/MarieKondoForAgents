@@ -1,0 +1,16 @@
+# Synthetic pilot: CRM contacts (fictional). One entry per in-scope source field.
+fields:
+  - {source: crm, field: kontakt.firma, entity: customer, attribute: legal_name, type: name, owner: ben,
+     asset: "manual://crm/kontakte",
+     parser: {transliterate_de: true, strip_legal_forms: true}}
+  - {source: crm, field: kontakt.ust_id, entity: customer, attribute: vat_id, type: identifier, owner: ben,
+     parser: {kind: de.vat}}
+  - {source: crm, field: kontakt.telefon, entity: customer, attribute: phone, type: phone, owner: ben,
+     parser: {region: DE}}
+  - {source: crm, field: kontakt.plz, entity: customer, attribute: postcode, type: text, owner: ben}
+  - {source: crm, field: kontakt.kontaktweg, entity: customer, attribute: contact_preference, type: text, owner: ben}
+  - {source: crm, field: kontakt.zahlungsziel, entity: customer, attribute: payment_terms, type: text, owner: ben}
+  - {source: crm, field: kontakt.email, entity: customer, attribute: email, type: text, owner: ben,
+     asset: "manual://crm/kontakte"}
+  - {source: crm, field: kontakt.geaendert, entity: customer, attribute: updated_at, type: datetime, owner: ben,
+     parser: {pattern: "DD.MM.YYYY HH:mm", zone: Europe/Berlin}}

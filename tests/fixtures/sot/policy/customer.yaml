@@ -1,0 +1,19 @@
+# Synthetic pilot policy: which source wins per customer field.
+entity: customer
+rules:
+  legal_name: {strategy: owner_decision, tie_breaker: owner_decision, owner: ben,
+               rationale: The registered name needs a human check against the trade register.}
+  contact_preference: {strategy: source_priority, sources: [crm, erp], tie_breaker: most_recent,
+                       timestamp_field: updated_at, owner: ben, rationale: Sales maintains contact wishes in the CRM.}
+  payment_terms: {strategy: source_priority, sources: [erp, crm], tie_breaker: most_recent, timestamp_field: updated_at,
+                  owner: ben, rationale: Accounting owns billing terms in the ERP.}
+  phone: {strategy: source_priority, sources: [crm, erp, sharepoint], tie_breaker: most_recent,
+          timestamp_field: updated_at, owner: ben, rationale: The CRM is checked on every call.}
+  vat_id: {strategy: source_priority, sources: [erp, crm], tie_breaker: owner_decision, owner: ben,
+           rationale: The ERP VAT ID is used on invoices.}
+  postcode: {strategy: most_recent, timestamp_field: updated_at, tie_breaker: source_priority,
+             sources: [erp, crm, sharepoint], owner: ben, rationale: Addresses change; the latest edit wins.}
+  annual_volume: {strategy: most_complete, tie_breaker: source_priority, sources: [erp, sharepoint], owner: ben,
+                  rationale: The more complete record is the better maintained one.}
+  updated_at: {strategy: most_recent, timestamp_field: updated_at, tie_breaker: source_priority,
+               sources: [crm, erp, sharepoint], owner: ben, rationale: Latest change across systems.}

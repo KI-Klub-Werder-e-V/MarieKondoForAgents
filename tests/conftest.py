@@ -296,3 +296,76 @@ def dp(engagement, cli, tmp_path, monkeypatch, request):
     yield {"cat": cat, "ok": ok, "items": items, "manifest": manifest, "files": files, "tmp": tmp_path,
            "lineage": tmp_path / "lineage.jsonl", "archive": tmp_path / "archive"}
     cat.close()
+
+
+# ---------------------------------------------------------------- c05 fixtures
+
+def example_scope():
+    """Scope with the example charter's stakeholders (ben, clara: data owners; eva: compliance; finn: agent user)."""
+    from konmari.charter.store import Scope
+
+    doc = load_yaml(EXAMPLE / "charter.yaml")
+    return Scope(doc["charter_id"], 1, [], {}, {s["id"]: s for s in doc["stakeholders"]})
+
+
+@pytest.fixture(scope="session")
+def sot_pipeline(tmp_path_factory):
+    """The synthetic c05 pilot run once: normalize, resolve, 120 labels, publish, policy v1 approved, golden built.
+    Tests get their own copy through `sot`."""
+    import sot_fixture as fx
+    from konmari.inventory.lineage import MemoryTransport
+    from konmari.normalize import store as nst
+    from konmari.policy import store as pst
+    from konmari.resolve import linkage as erl
+
+    d = tmp_path_factory.mktemp("sot")
+    f = fx.write(d)
+    db = d / "catalog.duckdb"
+    cat, sc = connect(f"duckdb:///{db}"), example_scope()
+    t = MemoryTransport()
+    norm = nst.run(cat, f["records"], f["specs"], "ben", t)
+    er = erl.run(cat, sc, "customer", erl.load_config(f["resolve"]), "ben")
+    known = set(fx.known_duplicates())
+    auto = cat.query("SELECT rec_a, rec_b FROM er_pair WHERE origin = 'auto' ORDER BY rec_a, rec_b LIMIT 120")
+    erl.label_pairs(cat, sc, "customer", [(r["rec_a"], r["rec_b"], "match" if (r["rec_a"], r["rec_b"]) in known
+                                           else "non_match") for r in auto], "clara")
+    erl.publish(cat, sc, "customer", "ben", sorted(known))
+    pst.load(cat, sc, f["policy"], "ben")
+    pst.approve(cat, sc, "customer", 1, "ben")
+    cat.close()
+    return {"db": db, "files": f, "norm": norm, "er": er, "events": t.events}
+
+
+@pytest.fixture
+def sot(sot_pipeline, tmp_path, monkeypatch):
+    from konmari.inventory.lineage import MemoryTransport
+
+    db = tmp_path / "catalog.duckdb"
+    shutil.copy(sot_pipeline["db"], db)
+    monkeypatch.setenv("KONMARI_CATALOG", f"duckdb:///{db}")
+    monkeypatch.setenv("KONMARI_LINEAGE_FILE", str(tmp_path / "lineage.jsonl"))
+    monkeypatch.setenv("KONMARI_NOTIFY_FILE", str(tmp_path / "notify.jsonl"))
+    c = connect(f"duckdb:///{db}")
+    yield {**sot_pipeline, "cat": c, "sc": example_scope(), "tmp": tmp_path, "transport": MemoryTransport(),
+           "notify": tmp_path / "notify.jsonl"}
+    c.close()
+
+
+def write_mini(d: Path, records: list[dict], fields: list[dict]) -> tuple[Path, Path]:
+    """A small records file plus one spec file for focused normalization tests."""
+    import json
+
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "normalize").mkdir(exist_ok=True)
+    (d / "normalize" / "spec.yaml").write_text(dump_yaml({"fields": fields}), encoding="utf-8")
+    rec = d / "records.jsonl"
+    rec.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records), encoding="utf-8")
+    return rec, d / "normalize"
+
+
+@pytest.fixture
+def sot_cli(engagement, sot, cli):
+    """`sot` plus the example engagement as cwd with an approved charter, for CLI commands that need the scope."""
+    code, _, err = cli("charter", "approve", "--as", "anna")
+    assert code == 0, err
+    return sot

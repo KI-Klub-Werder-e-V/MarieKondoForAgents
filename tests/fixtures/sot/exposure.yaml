@@ -1,0 +1,3 @@
+# Stand-in for the data-products / mcp-exposure (c08) declaration: customer fields agents may read.
+exposed:
+  customer: [legal_name, contact_preference, payment_terms, phone, vat_id, postcode, annual_volume, updated_at]

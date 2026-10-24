@@ -71,6 +71,22 @@ konmari retention rule add ... --as <id>            # Fristen je Kategorie (Comp
 konmari retention check --as <id>                   # abgelaufene Fristen, auch im Archiv (auch: retention hold)
 ```
 
+Schritt 5, Vereinheitlichen und führende Quelle (Anleitung: [docs/standardize-guide.de.md](docs/standardize-guide.de.md)):
+
+```
+konmari normalize --records records.jsonl --specs normalize/ --as <id>   # Rohwert bleibt, kanonischer Wert kommt dazu
+konmari normalize quarantine list --as <id>         # dann quarantine resolve|revert <id> --value ... --as <id>
+konmari resolve run --entity customer --config resolve.yaml --as <id>    # Dubletten über Systeme hinweg (Splink)
+konmari resolve review export --entity customer -o pairs.csv           # dann review import pairs.csv --as <id>
+konmari resolve publish --entity customer --known known.csv --as <id>  # nur bei Precision/Recall über der Untergrenze
+konmari policy load --file policy/customer.yaml --as <id>              # neue Fassung "pending" mit Auswirkung
+konmari policy approve customer --version 1 --as <id>                  # Feldverantwortliche/r gibt frei (auch: rollback)
+konmari policy check --exposure exposure.yaml       # jedes für Agenten sichtbare Feld braucht eine Regel
+konmari policy build customer                       # Golden Records mit Herkunft (auch: policy golden <entity> <cluster>)
+konmari conflicts list --as <id>                    # dann conflicts resolve <id> --source erp --ticket IT-4711 --as <id>
+konmari conflicts report --overdue                  # überfällige Konflikte (auch: accept, revert, export-tickets)
+```
+
 Für die Personendaten-Hinweise einmal das Sprachmodell laden: `uv run python -m spacy download de_core_news_lg`. SMB-Ablagen: `uv sync --extra smb`. Semantische Dubletten: `uv sync --extra semantic`, S3-Archiv: `uv sync --extra s3`.
 
 Der Katalog liegt standardmäßig in `.konmari/catalog.duckdb`. Für Postgres 16: `uv sync --extra postgres` und `KONMARI_CATALOG=postgresql://...` oder `--catalog`. Schnittstelle für spätere Changes: [docs/gate-contract.md](docs/gate-contract.md). Tests: `uv run pytest -q`.
