@@ -294,3 +294,17 @@ def test_inventory_step_completed_by_handoff(pilot, cat):
     _ready(cat)
     assert all(cs.step_status(cat, CID, c, "inventory")["status"] == "complete" for c in cs.DEFAULT_ORDER)
     assert len(audits(cat, "categories.step")) == 5
+
+def test_special_category_confirmed_after_approval_blocks_handoff(pilot, cat):
+    """An order approved before a special-category tier was known must not be handed off with it early."""
+    for i, c in enumerate(cs.DEFAULT_ORDER):
+        assets(cat, f"src-{i}", (f"crm://{c}", c, "crm"))
+        cs.assign(cat, sc_(cat), f"crm://{c}", c, "ben")
+    cs.propose(cat, sc_(cat), "ben")
+    cs.approve(cat, sc_(cat), "ben")
+    cat.execute("UPDATE source_asset SET sensitivity_tier = 'special-category' WHERE asset_uri = 'crm://kb-and-sops'")
+    order, reasons = cs.handoff(cat, sc_(cat))
+    assert order is None and any("special-category" in r and "kb-and-sops" in r for r in reasons)
+    cs.propose(cat, sc_(cat), "ben")
+    assert cs.approve(cat, sc_(cat), "ben")["categories"][-1] == "kb-and-sops"
+    assert cs.handoff(cat, sc_(cat))[0][-1] == "kb-and-sops"

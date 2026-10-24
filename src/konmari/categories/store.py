@@ -313,12 +313,21 @@ def risk(cat: Catalog, sc: Scope, weights: dict | None = None) -> dict[str, dict
                   "systems": len({a["system_type"] for a in assets}),
                   "overlaps": len(overlap_hints(cat, sc, cid))}
         out[cid] = {"score": round(sum(w[k] * v for k, v in inputs.items()), 3), "inputs": inputs,
-                    "special_category": "special-category" in confirmed}
+                    "special_category": any(a["sensitivity_tier"] == "special-category" for a in assets)}
     return out
 
 
 def _tiebreak(cid: str) -> int:
     return DEFAULT_ORDER.index(cid) if cid in DEFAULT_ORDER else len(DEFAULT_ORDER)
+
+
+def special_not_last(cat: Catalog, sc: Scope, order: list[str]) -> str | None:
+    """Reason why `order` breaks the special-category-last rule for the current tiers, or None."""
+    scores = risk(cat, sc)
+    special = [c for c in order if scores.get(c, {}).get("special_category")]
+    if special and order[-len(special):] != special:
+        return f"categories with special-category data ({', '.join(special)}) must come after all others"
+    return None
 
 
 def proposed_order(scores: dict) -> list[str]:
@@ -368,9 +377,8 @@ def set_order(cat: Catalog, sc: Scope, order: list[str], actor: str, reason: str
     base = approved_order(cat, sc.charter_id)
     w = base["weights"] if base else DEFAULT_WEIGHTS
     scores = risk(cat, sc, w)
-    special = [c for c in order if scores[c]["special_category"]]
-    if special and order[-len(special):] != special:
-        raise Refused(f"categories with special-category data ({', '.join(special)}) must come after all others")
+    if why := special_not_last(cat, sc, order):
+        raise Refused(why)
     return _insert_version(cat, sc, order, scores, w, actor, reason)
 
 
@@ -380,6 +388,8 @@ def approve(cat: Catalog, sc: Scope, actor: str, version: int | None = None) -> 
     row = next((r for r in rows if r["version"] == version), None) if version else (rows[-1] if rows else None)
     if row is None or row["status"] != "proposed":
         raise Refused("no proposed category order to approve; run 'konmari categories order --propose' first")
+    if why := special_not_last(cat, sc, row["categories"]):
+        raise Refused(f"{why}; propose a new order")
     prev = approved_order(cat, sc.charter_id)
     cat.execute("UPDATE category_order_version SET status = 'approved', approved_by = ?, approved_at = ?"
                 " WHERE charter_id = ? AND version = ?", (actor, now(), sc.charter_id, row["version"]))
@@ -396,6 +406,8 @@ def handoff(cat: Catalog, sc: Scope, actor: str | None = None) -> tuple[list[str
     order = approved_order(cat, sc.charter_id)
     if order is None:
         reasons.append("category order not approved")
+    elif why := special_not_last(cat, sc, order["categories"]):  # a tier confirmed after approval
+        reasons.append(f"approved order v{order['version']} is out of date: {why}; propose and approve a new order")
     for a in _assets(cat, sc.charter_id):
         p = primary(cat, a["asset_uri"])
         if not p or p["state"] != "accepted":
