@@ -59,7 +59,7 @@ def check(rep, asset_id, name):
 # ---------------------------------------------------------------- registry and freshness
 
 def test_asset_without_update_interval(c09):
-    asset(c09["cat"], "sql://crm/contacts", freq="unknown")
+    asset(c09["cat"], "sql://crm/contacts", freq="unknown", owner="clara")  # the use_case_owner is ben
     asset(c09["cat"], "sql://crm/orphan", owner=None)
     rep, send = monitor(c09)
     assert {"asset": "sql://crm/contacts", "reason": "missing_update_interval"} in rep["unmonitorable"]
@@ -292,8 +292,9 @@ def test_incident_lifecycle_transitions(c09):
 
 def test_escalation_on_silence(c09):
     cat = c09["cat"]
-    asset(cat, "sql://crm/contacts", age_days=20)
-    monitor(c09)
+    asset(cat, "sql://crm/contacts", age_days=20, owner="clara")  # owner clara, use_case_owner ben
+    _, first = monitor(c09)
+    assert [m["to"] for m in first.sent] == ["training@example.org"]
     _, send = monitor(c09, AT + timedelta(days=2))  # Wednesday: 2 business days, not more
     assert not [m for m in send.sent if "escalation" in m["subject"]]
     _, send = monitor(c09, AT + timedelta(days=3))  # Thursday
@@ -359,6 +360,8 @@ def test_scorecard_updated(c09):
     ctx = sp.Context(cat, {"stale_multiple": 2, "evidence_max_age_days": 90}, at=now())
     a = cat.one("SELECT * FROM source_asset WHERE asset_uri = 'sql://crm/fresh'")
     assert sp.AuthoritativeCurrent().run(a, ctx).level == 2  # an `ok` status does not lower the level
+    stale = cat.one("SELECT * FROM source_asset WHERE asset_uri = 'sql://crm/contacts'")
+    assert sp.AuthoritativeCurrent().run(stale, ctx).level == 0
 
 
 def test_email_and_webhook_channels(monkeypatch):
