@@ -1,0 +1,63 @@
+# Default readiness rubric ("does it spark joy for agents?"). Published versions are immutable:
+# to change a descriptor, gate or mapping, copy this file, give it a new rubric_version and pass it with --rubric.
+rubric_version: konmari-joy-1
+scale:
+  "0": absent
+  "1": partial
+  "2": meets
+  "3": meets and is automated or monitored
+criteria:
+  - id: authoritative_current
+    question: Is it authoritative and current?
+    gate: true
+    levels:
+      "0": superseded, or last update older than the stale multiple of the expected update frequency
+      "1": last update older than the expected update frequency
+      "2": updated within the expected update frequency, or no fixed cadence (irregular)
+      "3": current, and freshness is checked automatically (e.g. a passing Soda freshness check)
+    standards: {dama: [timeliness], iso25012: [currentness, credibility], fair: [R1.2]}
+  - id: owned_maintained
+    question: Is it owned and maintained?
+    gate: false
+    levels:
+      "0": no owner
+      "1": owner named but inactive or not verifiable in the charter register
+      "2": active owner (charter stakeholder or confirmed active)
+      "3": active owner and a steward assigned
+    standards: {dama: [], iso25012: [credibility], fair: [R1.2]}
+  - id: meaning_clear
+    question: Is the business meaning clear?
+    gate: false
+    levels:
+      "0": no description
+      "1": description, but less than half of the fields or sections map to glossary terms
+      "2": description and at least half of the fields or sections map to glossary terms
+      "3": description and every field or section maps to a glossary term
+    standards: {dama: [validity], iso25012: [understandability], fair: [R1]}
+  - id: retrievable_precise
+    question: Can an agent retrieve a precise chunk or record?
+    gate: false
+    levels:
+      "0": no stable record or chunk identifier, or the asset is never retrieved for pilot questions
+      "1": retrieved for some pilot questions (hit rate@k below 0.5)
+      "2": stable identifier present (structural proxy), or hit rate@k at least 0.5
+      "3": measured on pilot questions with hit rate@k at least 0.8 and MRR at least 0.5
+    standards: {dama: [], iso25012: [accessibility], fair: [F1, A1]}
+  - id: conflicts_resolved
+    question: Are conflicts with other copies resolved?
+    gate: false
+    levels:
+      "0": open duplicate or conflict cluster without a winning copy
+      "1": open duplicate or conflict cluster with a winning copy
+      "2": no open duplicate or conflict cluster
+      "3": no open cluster, and duplicates are checked automatically (e.g. a passing Soda duplicate check)
+    standards: {dama: [consistency, uniqueness], iso25012: [consistency], fair: []}
+  - id: permissions_explicit
+    question: Are permissions explicit?
+    gate: true
+    levels:
+      "0": reachable via Everyone, Everyone except external users, or an anonymous link
+      "1": explicit grants, but personal data without a RoPA reference
+      "2": explicit grants only
+      "3": explicit grants and a confirmed sensitivity tier
+    standards: {dama: [], iso25012: [confidentiality], fair: [A1.2]}

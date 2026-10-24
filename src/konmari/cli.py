@@ -10,7 +10,7 @@ import yaml
 
 from konmari import versions as v
 from konmari.canonical import dump_yaml, load_yaml
-from konmari.catalog import connect
+from konmari.catalog import audit_change, connect
 from konmari.charter import store as cs
 from konmari.charter.gate import gate
 from konmari.charter.validation import STEPS, roles_by_id, validate_charter
@@ -19,6 +19,10 @@ from konmari.inventory import lineage
 from konmari.inventory import sensitivity as sens
 from konmari.inventory import store as inv
 from konmari.metrics import store as ms
+from konmari.scorecard import engine as se
+from konmari.scorecard import probes as sp
+from konmari.scorecard import report as sr
+from konmari.scorecard import review as sv
 from konmari.versions import Refused
 
 
@@ -453,6 +457,154 @@ def categories_step(a, cat_url):
     return 0
 
 
+# ---------------------------------------------------------------- scorecard
+
+def _print_run(s) -> None:
+    print(f"scorecard run {s['run_id']} (rubric {s['rubric_version']}, charter {s['charter_id']} "
+          f"v{s['charter_version']}, trigger {s['trigger']})")
+    for v in s["scored"]:
+        why = f" ({v['reason']}{': ' + v['reason_ref'] if v['reason_ref'] else ''})" if v["reason"] else ""
+        fixes = f"; fix: {', '.join(i['criterion'] for i in v['fix_items'])}" if v["fix_items"] else ""
+        print(f"proposed {v['proposed']}{why}: {v['asset_uri']}{fixes}")
+    for o in s["out_of_scope"]:
+        print(f"out of scope: {o['asset_uri']} ({o['reason']})")
+    for c, reasons in s["blocked"].items():
+        print(f"not scored, category {c}: " + "; ".join(reasons))
+    print(f"{len(s['scored'])} scored, {len(s['out_of_scope'])} out of scope; review with 'konmari review list'")
+
+
+def score_run(a, cat_url):
+    cat = connect(cat_url)
+    cfg = se.load_config(a.config)
+    only = None
+    if a.changed:
+        only = se.changed_assets(cat, _scope(a, cat))
+        if not only:
+            print("no inventory changes since the last run")
+            return 0
+    _print_run(se.score(cat, a.charter, a.as_ or "konmari-score", cfg, a.rubric, only=only,
+                        trigger="inventory_change" if a.changed else "manual"))
+    return 0
+
+
+def _actor_in_register(a, cat):
+    sc = _scope(a, cat)
+    _member({"stakeholders": list(sc.stakeholders.values())}, a.as_)
+    return sc
+
+
+def score_evidence(a, cat_url):
+    cat = connect(cat_url)
+    _actor_in_register(a, cat)
+    inv.get(cat, a.asset)
+    payload = json.loads(a.data)
+    if a.kind == "acl_snapshot" and "principals" in payload:  # raw ACL: keep only tokens, counts and a hash
+        payload = sp.acl_payload(payload["principals"], payload.get("anonymous_links", 0))
+    row = sp.record_evidence(cat, a.asset, a.kind, payload, a.ref, a.as_, a.captured_at)
+    print(f"{a.asset}: {a.kind} evidence recorded ({row['evidence_ref']}, captured {row['captured_at']:%Y-%m-%d %H:%M})")
+    return 0
+
+
+def score_ingest(a, cat_url):
+    cat = connect(cat_url)
+    sc = _actor_in_register(a, cat)
+    rows, skipped = (sp.ingest_soda if a.soda else sp.ingest_odcs)(cat, sc.charter_id, a.soda or a.odcs, a.as_)
+    for r in rows:
+        print(f"{r['asset_uri']}: {r['kind']} {r['payload']}")
+    for s in skipped:
+        print(f"skipped: {s}", file=sys.stderr)
+    print(f"{len(rows)} evidence row(s) recorded")
+    return 0
+
+
+def score_irrelevant(a, cat_url):
+    cat = connect(cat_url)
+    sc = _actor_in_register(a, cat)
+    inv.get(cat, a.asset)
+    sp.record_evidence(cat, a.asset, "relevance", {"relevant": False, "marked_by": a.as_}, f"expert:{a.as_}", a.as_)
+    audit_change(cat, "scorecard.mark_irrelevant", a.asset, None, {"relevant": False}, actor=a.as_, reason=a.reason,
+                 charter_id=sc.charter_id, step="score")
+    print(f"{a.asset}: marked as not needed for the pilot by {a.as_}; the next 'konmari score' proposes discard")
+    return 0
+
+
+def score_fix_done(a, cat_url):
+    cat = connect(cat_url)
+    _actor_in_register(a, cat)
+    _print_run(se.complete_fix(cat, a.asset, a.criterion, a.as_, a.charter, cfg=se.load_config(a.config)))
+    return 0
+
+
+def score_alert(a, cat_url):
+    cat = connect(cat_url)
+    _actor_in_register(a, cat)
+    sp.record_evidence(cat, a.asset, "freshness_alert", {"status": a.status}, a.ref, a.as_)
+    _print_run(se.rescore(cat, a.asset, "freshness_alert", a.as_, a.charter, {"status": a.status},
+                          cfg=se.load_config(a.config)))
+    return 0
+
+
+def review_list(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    if a.asset:
+        for r in se.reviews(cat, a.asset):
+            print(f"{r['reviewed_at']:%Y-%m-%d %H:%M} {r['action']} by {r['actor']}: {r['from_verdict'] or '-'} -> "
+                  f"{r['to_verdict']} (rubric {r['rubric_version']})" +
+                  (f"; justification: {r['justification']}" if r["justification"] else ""))
+        st = sv.status(cat, a.asset)
+        print(f"status {st['status']}, effective verdict {st['effective'] or 'none'}")
+        return 0
+    for cid, assets in sorted(se.split_scope(cat, sc)[0].items()):
+        for x in assets:
+            st = sv.status(cat, x["asset_uri"])
+            if st["verdict"] is None or (a.status and st["status"] != a.status):
+                continue
+            unknown = " [unknown criteria]" if st["verdict"]["has_unknown"] else ""
+            print(f"{x['asset_uri']} ({cid}): proposed {st['proposed']}, status {st['status']}, effective "
+                  f"{st['effective'] or 'none'}{unknown}")
+    return 0
+
+
+def review_act(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    if a.cmd == "accept":
+        if a.all_keep:
+            done, skipped = sv.bulk_accept(cat, sc, a.as_, a.category)
+            print(f"accepted {len(done)} keep proposal(s); {len(skipped)} need a one-by-one review")
+            return 0
+        if not a.asset:
+            return _fail("give an asset or --all-keep")
+        sv.accept(cat, sc, a.asset, a.as_)
+    elif a.cmd == "override":
+        sv.override(cat, sc, a.asset, a.to, a.justification, a.as_)
+    else:
+        sv.reverse(cat, sc, a.asset, a.to, a.justification, a.as_)
+    st = sv.status(cat, a.asset)
+    print(f"{a.asset}: {a.cmd} recorded by {a.as_}; verdict {st['effective']} ({st['status']})")
+    return 0
+
+
+def scorecard_report(a, cat_url):
+    cat = connect(cat_url)
+    rep = sr.build(cat, _scope(a, cat))
+    out = sr.to_json(rep) + "\n" if a.format == "json" else sr.render_csv(rep, a.level) if a.format == "csv" \
+        else sr.render_md(rep)
+    if a.output:
+        Path(a.output).write_text(out, encoding="utf-8")
+        print(f"wrote {a.output}")
+    else:
+        print(out, end="")
+    return 0
+
+
+def scorecard_compare(a, cat_url):
+    lines = sr.compare(connect(cat_url), a.run_a, a.run_b, a.allow_rubric_mismatch)
+    print("\n".join(lines) if lines else "no differences")
+    return 0
+
+
 # ---------------------------------------------------------------- parser
 
 def build_parser() -> argparse.ArgumentParser:
@@ -630,6 +782,65 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("--status", choices=["in_progress", "complete"])
     q.add_argument("--waive", action="store_true", help="allow starting before earlier categories finish")
     q.add_argument("--reason")
+
+    sco = groups.add_parser("score", help="joy test: score in-scope assets, propose keep/fix/discard (no subcommand)")
+    sco.add_argument("--charter", default="charter.yaml", help="charter file (default: charter.yaml)")
+    sco.add_argument("--as", dest="as_", metavar="STAKEHOLDER_ID")
+    sco.add_argument("--config", help="pilot thresholds (default: scorecard.yaml if present)")
+    sco.add_argument("--rubric", help="custom rubric YAML (default: the shipped rubric)")
+    sco.add_argument("--changed", action="store_true", help="only assets whose inventory entry changed")
+    sco.set_defaults(fn=score_run)
+    scs = sco.add_subparsers(dest="cmd")
+    q = ccmd(scs, "evidence", score_evidence, "record one evidence fact (references, counts, hashes only)")
+    q.add_argument("asset")
+    q.add_argument("--kind", required=True, choices=list(sp.KINDS))
+    q.add_argument("--data", required=True, help="JSON payload; acl_snapshot also takes {\"principals\": [...]}")
+    q.add_argument("--ref", required=True, help="evidence reference, e.g. acl:snapshot-2026-10-01")
+    q.add_argument("--captured-at", help="capture timestamp (ISO 8601, default now)")
+    q = ccmd(scs, "ingest", score_ingest, "ingest Soda Core scan results or an ODCS contract as evidence")
+    g = q.add_mutually_exclusive_group(required=True)
+    g.add_argument("--soda", help="soda scan results JSON (soda scan -srf)")
+    g.add_argument("--odcs", help="ODCS v3 data contract YAML")
+    q = ccmd(scs, "irrelevant", score_irrelevant, "mark an asset as not needed for any pilot question")
+    q.add_argument("asset")
+    q.add_argument("--reason", required=True)
+    q = ccmd(scs, "fix-done", score_fix_done, "mark a fix item complete and re-score the asset")
+    q.add_argument("asset")
+    q.add_argument("criterion", choices=list(se.FIX_ROUTES))
+    q.add_argument("--config")
+    q = ccmd(scs, "alert", score_alert, "record a freshness alert and re-score the asset")
+    q.add_argument("asset")
+    q.add_argument("--status", required=True, choices=["warn", "error"])
+    q.add_argument("--ref", required=True, help="alert reference, e.g. monitor:incident-17")
+    q.add_argument("--config")
+
+    rv = groups.add_parser("review", help="review proposed verdicts: list, accept, override, reverse")
+    rvs = rv.add_subparsers(dest="cmd", required=True)
+    q = ccmd(rvs, "list", review_list, "list verdicts, or one asset's review history", actor=None)
+    q.add_argument("asset", nargs="?")
+    q.add_argument("--status", choices=["proposed", "approved"])
+    q = ccmd(rvs, "accept", review_act, "accept a proposal (or --all-keep: every keep without unknown)")
+    q.add_argument("asset", nargs="?")
+    q.add_argument("--all-keep", action="store_true")
+    q.add_argument("--category")
+    for name, help in [("override", "replace the proposal by another verdict (justification required)"),
+                       ("reverse", "change an approved verdict (justification required)")]:
+        q = ccmd(rvs, name, review_act, help)
+        q.add_argument("asset")
+        q.add_argument("--to", required=True, choices=list(sv.VERDICTS))
+        q.add_argument("--justification")
+
+    sca = groups.add_parser("scorecard", help="scorecard reports and run comparison")
+    scas = sca.add_subparsers(dest="cmd", required=True)
+    q = ccmd(scas, "report", scorecard_report, "asset and category report (md, csv, json)", actor=None)
+    q.add_argument("--format", choices=["md", "csv", "json"], default="md")
+    q.add_argument("--level", choices=["asset", "category"], default="asset", help="CSV only")
+    q.add_argument("-o", "--output")
+    q = scas.add_parser("compare", help="criterion levels that changed between two runs")
+    q.add_argument("run_a")
+    q.add_argument("run_b")
+    q.add_argument("--allow-rubric-mismatch", action="store_true")
+    q.set_defaults(fn=scorecard_compare)
     return p
 
 

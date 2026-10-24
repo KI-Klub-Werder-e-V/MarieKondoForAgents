@@ -1,0 +1,20 @@
+# Synthetic ODCS v3 data contract for the fictional CRM tickets table.
+apiVersion: v3.0.2
+kind: DataContract
+id: tickets-contract
+version: 1.0.0
+status: active
+name: Support tickets
+description:
+  purpose: Member requests to the club office and the answers given.
+schema:
+  - name: tickets
+    physicalName: tickets
+    logicalType: object
+    description: One row per member request.
+    properties:
+      - name: id
+        logicalType: integer
+        businessName: Ticket ID
+      - name: body
+        logicalType: string

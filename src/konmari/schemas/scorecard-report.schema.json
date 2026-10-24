@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/schemas/scorecard-report.schema.json",
+  "title": "KonMari-Kit joy test scorecard report",
+  "type": "object",
+  "required": ["charter_id", "charter_version", "run_id", "rubric_version", "generated_at", "config",
+               "aggregation_rule", "aspect_criteria", "assets", "categories"],
+  "properties": {
+    "charter_id": {"type": "string"},
+    "charter_version": {"type": "integer"},
+    "run_id": {"type": "string"},
+    "rubric_version": {"type": "string"},
+    "generated_at": {"type": "string"},
+    "config": {"type": "object"},
+    "aggregation_rule": {"type": "string", "minLength": 1},
+    "aspect_criteria": {"type": "object"},
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["asset_uri", "title", "category", "criteria", "verdict", "rubric_version", "run_id"],
+        "properties": {
+          "asset_uri": {"type": "string"},
+          "title": {"type": "string"},
+          "category": {"type": "string"},
+          "rubric_version": {"type": "string"},
+          "run_id": {"type": "string"},
+          "criteria": {
+            "type": "object",
+            "required": ["authoritative_current", "owned_maintained", "meaning_clear", "retrievable_precise",
+                         "conflicts_resolved", "permissions_explicit"],
+            "additionalProperties": {"$ref": "#/$defs/score"}
+          },
+          "verdict": {
+            "type": "object",
+            "required": ["proposed", "reason", "reason_ref", "status", "effective", "fix_items"],
+            "properties": {
+              "proposed": {"enum": ["keep", "fix", "discard"]},
+              "reason": {"enum": [null, "irrelevant", "redundant", "stale_unowned"]},
+              "reason_ref": {"type": ["string", "null"]},
+              "status": {"enum": ["proposed", "approved"]},
+              "effective": {"enum": [null, "keep", "fix", "discard"]},
+              "fix_items": {
+                "type": "array",
+                "items": {
+                  "type": "object", "required": ["criterion", "level", "capability"],
+                  "properties": {"criterion": {"type": "string"}, "level": {"$ref": "#/$defs/level"},
+                                 "capability": {"type": "string"}}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["category", "assets", "aspects", "verdicts"],
+        "properties": {
+          "category": {"type": "string"},
+          "assets": {"type": "integer"},
+          "verdicts": {
+            "type": "object", "required": ["keep", "fix", "discard", "unreviewed"],
+            "additionalProperties": {"type": "integer"}
+          },
+          "aspects": {
+            "type": "array", "minItems": 6, "maxItems": 6,
+            "items": {
+              "type": "object", "required": ["aspect", "criteria", "assets", "meeting", "share", "state"],
+              "properties": {
+                "aspect": {"enum": ["Format", "Metadata", "Access", "Consistency", "Update mechanism", "Discoverability"]},
+                "share": {"type": "number", "minimum": 0, "maximum": 1},
+                "state": {"enum": ["poorly_prepared", "in_progress", "agent_ready"]}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "level": {"oneOf": [{"type": "integer", "minimum": 0, "maximum": 3}, {"const": "unknown"}]},
+    "score": {
+      "type": "object", "required": ["level", "probe", "evidence_ref", "evidence_at", "stale_evidence"],
+      "properties": {
+        "level": {"$ref": "#/$defs/level"},
+        "probe": {"type": "string"},
+        "evidence_ref": {"type": ["string", "null"]},
+        "evidence_at": {"type": ["string", "null"]},
+        "stale_evidence": {"type": "boolean"}
+      }
+    }
+  }
+}

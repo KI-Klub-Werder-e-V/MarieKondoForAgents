@@ -10,7 +10,9 @@ from importlib.resources import files
 from pathlib import Path
 
 DEFAULT_URL = "duckdb:///.konmari/catalog.duckdb"
-_AUDIT_MUTATION = re.compile(r"^\s*(update|delete\s+from|truncate)\s+(table\s+)?audit_event\b", re.I)
+# audit_event, published rubric versions and the verdict review history are append-only
+_AUDIT_MUTATION = re.compile(r"^\s*(update|delete\s+from|truncate)\s+(table\s+)?(audit_event|rubric_version|verdict_review)\b",
+                             re.I)
 
 
 class AppendOnlyError(RuntimeError):
@@ -37,8 +39,8 @@ class Catalog:
         self.conn, self.dialect = conn, dialect
 
     def execute(self, sql: str, params=()):
-        if _AUDIT_MUTATION.match(sql):
-            raise AppendOnlyError("audit_event is append-only: UPDATE, DELETE and TRUNCATE are refused")
+        if m := _AUDIT_MUTATION.match(sql):
+            raise AppendOnlyError(f"{m[3]} is append-only: UPDATE, DELETE and TRUNCATE are refused")
         if self.dialect == "postgres":
             sql = sql.replace("?", "%s")
         cur = self.conn.cursor()

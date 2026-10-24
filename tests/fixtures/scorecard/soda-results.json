@@ -1,0 +1,21 @@
+{
+  "definitionName": "crm-checks",
+  "defaultDataSource": "crm",
+  "dataTimestamp": "2026-10-23T06:00:00+00:00",
+  "scanStartTimestamp": "2026-10-23T06:00:00+00:00",
+  "scanEndTimestamp": "2026-10-23T06:00:05+00:00",
+  "hasErrors": false,
+  "hasWarnings": false,
+  "hasFailures": false,
+  "checks": [
+    {"identity": "crm-tickets-freshness-1", "name": "Freshness of tickets", "type": "generic",
+     "definition": "checks for tickets:\n  - freshness(updated_at) < 1d", "dataSource": "crm", "table": "tickets",
+     "column": "updated_at", "outcome": "pass"},
+    {"identity": "crm-tickets-dupes-1", "name": "No duplicate ticket ids", "type": "generic",
+     "definition": "checks for tickets:\n  - duplicate_count(id) = 0", "dataSource": "crm", "table": "tickets",
+     "column": "id", "outcome": "pass"},
+    {"identity": "crm-other-rows-1", "name": "Row count", "type": "generic",
+     "definition": "checks for unknown_table:\n  - row_count > 0", "dataSource": "crm", "table": "unknown_table",
+     "outcome": "pass"}
+  ]
+}

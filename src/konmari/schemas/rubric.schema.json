@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/schemas/rubric.schema.json",
+  "title": "KonMari-Kit readiness rubric",
+  "type": "object",
+  "required": ["rubric_version", "scale", "criteria"],
+  "additionalProperties": false,
+  "properties": {
+    "rubric_version": {"type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*$"},
+    "scale": {"$ref": "#/$defs/levels"},
+    "criteria": {
+      "type": "array", "minItems": 6, "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": ["id", "question", "gate", "levels", "standards"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"enum": ["authoritative_current", "owned_maintained", "meaning_clear", "retrievable_precise",
+                          "conflicts_resolved", "permissions_explicit"]},
+          "question": {"type": "string", "minLength": 1},
+          "gate": {"type": "boolean"},
+          "levels": {"$ref": "#/$defs/levels"},
+          "standards": {
+            "type": "object", "required": ["dama", "iso25012", "fair"], "additionalProperties": false,
+            "properties": {
+              "dama": {"type": "array", "items": {"type": "string"}},
+              "iso25012": {"type": "array", "items": {"type": "string"}},
+              "fair": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "levels": {
+      "type": "object", "required": ["0", "1", "2", "3"], "additionalProperties": false,
+      "patternProperties": {"^[0-3]$": {"type": "string", "minLength": 1}}
+    }
+  }
+}

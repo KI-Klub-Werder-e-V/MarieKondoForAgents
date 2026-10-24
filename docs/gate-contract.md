@@ -69,3 +69,15 @@ require_step("kb-and-sops", "score", charter_path="charter.yaml", catalog=None) 
 It refuses when the previous KonMari step is not `complete` for that category, when no category order is approved, or when an earlier category in the order has not finished this step and no approver recorded a waiver (`konmari categories step <category> <step> --waive --reason ...`). Categories without accepted assets never hold up later ones. A step marks its own progress with `konmari.categories.store.set_step(cat, scope, category, step, "in_progress" | "complete", actor)`; every change is audited.
 
 `readiness-scorecard` (c03) reads the sequence with `handoff(cat, scope)`. It returns `(categories, [])`, or `(None, reasons)` with `category order not approved`, unassigned assets (no accepted primary category) and incomplete inventory records. Passing completes the `inventory` step for every in-scope category. Overlap hints for c04 come from `konmari.categories.store.overlap_hints(cat, scope, category)`.
+
+## Approved verdicts (from c03)
+
+Later steps act only on approved scorecard verdicts. c04 retention-decisions executes approved `discard`, c08 exposes only approved `keep`:
+
+```python
+from konmari.scorecard import effective_verdict
+
+effective_verdict(cat, asset_uri)   # "keep" | "fix" | "discard" | None (never approved)
+```
+
+It returns the latest approved verdict (accept, override or reversal) from the append-only `verdict_review` history. `konmari.scorecard.review.status(cat, asset_uri)["status"]` is `proposed` while a re-score waits for review. Evidence for the scorecard is written with `konmari.scorecard.probes.record_evidence(cat, asset_uri, kind, payload, ref, actor, captured_at)`; the kinds and their allowed fields are in `probes.KINDS` (references, hashes, counts and flags only). After a fix, call `konmari.scorecard.engine.complete_fix(cat, asset_uri, criterion, actor)` to re-score.

@@ -48,6 +48,16 @@ konmari categories order --propose --as <id>        # Reihenfolge nach Risiko, d
 konmari categories handoff                          # Übergabe an Schritt 3 (Exit 0 = ok)
 ```
 
+Schritt 3, Freude-Test (Anleitung: [docs/scorecard-guide.de.md](docs/scorecard-guide.de.md)):
+
+```
+konmari score evidence <asset> --kind acl_snapshot --data '{"principals": [...]}' --ref <ref> --as <id>  # Belege (auch: score ingest --soda/--odcs)
+konmari score --as <id>                             # sechs Kriterien je Asset, Vorschlag keep/fix/discard
+konmari review list --status proposed               # dann review accept|override|reverse <asset> --as <id>
+konmari score fix-done <asset> <kriterium> --as <id>  # neu bewerten (auch: score --changed, score alert)
+konmari scorecard report --format json              # Assets und Kategorie-Reife (md, csv, json)
+```
+
 Für die Personendaten-Hinweise einmal das Sprachmodell laden: `uv run python -m spacy download de_core_news_lg`. SMB-Ablagen: `uv sync --extra smb`.
 
 Der Katalog liegt standardmäßig in `.konmari/catalog.duckdb`. Für Postgres 16: `uv sync --extra postgres` und `KONMARI_CATALOG=postgresql://...` oder `--catalog`. Schnittstelle für spätere Changes: [docs/gate-contract.md](docs/gate-contract.md). Tests: `uv run pytest -q`.
