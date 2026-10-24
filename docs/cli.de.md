@@ -1,6 +1,6 @@
 # Alle Befehle
 
-Übersicht über die `konmari`-Befehle je Schritt. Ausführlich erklärt in den Anleitungen, die bei jedem Schritt verlinkt sind. Pfade sind relativ zum Repository; aus `docs/` heraus gelten die Links unten.
+Übersicht über die `konmari`-Befehle je Schritt. Ausführlich erklärt in den Anleitungen, die bei jedem Schritt verlinkt sind.
 
 Installation (Python 3.12, [uv](https://docs.astral.sh/uv/)):
 

@@ -1,0 +1,27 @@
+name: Pilot-Bericht / Pilot report
+description: Ihr habt das Kit an einem echten Anwendungsfall ausprobiert. Tell us how a real pilot went.
+labels: [pilot-report]
+body:
+  - type: markdown
+    attributes:
+      value: "Danke! Gescheiterte Piloten sind genauso wertvoll. Bitte ohne echte Personendaten und ohne Firmengeheimnisse."
+  - type: input
+    id: usecase
+    attributes: {label: "Anwendungsfall / Use case", placeholder: "FAQ-Assistent für die Geschäftsstelle"}
+    validations: {required: true}
+  - type: input
+    id: systems
+    attributes: {label: "Quellsysteme / Source systems", placeholder: "SharePoint, CSV-Export aus dem CRM, Netzlaufwerk"}
+  - type: dropdown
+    id: reached
+    attributes:
+      label: "Bis zu welchem Schritt seid ihr gekommen? / Furthest step reached"
+      options: [1 charter, 2 inventory, 3 score, 4 discard, 5 normalize, 6 enrich, 7 govern, 8 connect, 9 eval]
+    validations: {required: true}
+  - type: textarea
+    id: stuck
+    attributes: {label: "Wo hat es geklemmt? / Where did it get stuck?"}
+    validations: {required: true}
+  - type: textarea
+    id: thresholds
+    attributes: {label: "Schwellenwerte, die ihr angepasst habt / Thresholds you changed", description: "z. B. Dubletten-Schwelle, Aktualitätsfrist, Fragenkatalog"}

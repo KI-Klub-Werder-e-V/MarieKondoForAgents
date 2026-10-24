@@ -1,0 +1,16 @@
+name: Idee / Feature request
+description: Neue Funktion oder neuer Konnektor. New capability or connector.
+labels: [idea]
+body:
+  - type: textarea
+    id: problem
+    attributes: {label: "Welches Problem löst es? / What problem does it solve?"}
+    validations: {required: true}
+  - type: dropdown
+    id: step
+    attributes:
+      label: "Schritt / Step"
+      options: [1 charter, 2 inventory, 3 score, 4 discard, 5 normalize, 6 enrich, 7 govern, 8 connect, 9 eval, übergreifend / cross-cutting]
+  - type: textarea
+    id: idea
+    attributes: {label: "Vorschlag / Proposal", description: "Größere Änderungen werden später ein OpenSpec-Change."}

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  --yellow:#F5C842; --teal:#42BAC5; --petrol:#1a7a83; --ink:#10262a; --paper:#FFFDF6; --mist:#e9e4d2;
+  --display:"Bricolage Grotesque",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0}
+html,body{width:1280px;height:640px;overflow:hidden;background:var(--yellow)}
+.b{position:relative;width:1280px;height:640px;color:var(--ink);font-family:var(--display)}
+.copy{position:absolute;left:72px;top:72px;width:640px}
+.kicker{font:500 18px/1 var(--mono);letter-spacing:.02em}
+h1{margin-top:36px;font-weight:800;font-size:68px;line-height:1;letter-spacing:-.035em}
+p{margin-top:32px;font-weight:500;font-size:25px;line-height:1.35;letter-spacing:-.01em;max-width:540px}
+.foot{position:absolute;left:72px;bottom:56px;font:500 16px/1 var(--mono);display:flex;gap:24px}
+.foot b{font-weight:700}
+/* heap: the cluttered attic */
+.slip{position:absolute;background:var(--paper);border:2px solid var(--ink);border-radius:3px;
+  font:500 13px/1 var(--mono);padding:10px 12px;white-space:nowrap}
+.slip.gone{opacity:.45;text-decoration:line-through}
+/* drawer: vertical KonMari fold */
+.drawer{position:absolute;left:836px;top:236px;width:372px;height:340px;background:var(--petrol);
+  border:3px solid var(--ink);border-radius:4px;padding:28px 22px 0;display:flex;gap:10px;align-items:flex-end}
+.drawer::after{content:"agent-ready";position:absolute;left:22px;bottom:-34px;font:700 15px/1 var(--mono);color:var(--ink)}
+.spine{flex:1;background:var(--paper);border:2px solid var(--ink);border-bottom:0;border-radius:3px 3px 0 0;
+  position:relative;writing-mode:vertical-rl;transform:rotate(180deg);font:500 13px/1.15 var(--mono);
+  padding:14px 6px 26px;display:flex;justify-content:space-between}
+.spine::before{content:"";position:absolute;bottom:0;left:-2px;right:-2px;height:14px;background:var(--teal);border:2px solid var(--ink);border-radius:0 0 3px 3px}
+.spine b{font-weight:700}
+.arrow{position:absolute;left:760px;top:330px}
+</style></head><body>
+<div class="b">
+  <div class="copy">
+    <div class="kicker">MarieKondoFürAgenten · KonMari-Kit</div>
+    <h1>Aufräumen, bevor die Agenten kommen.</h1>
+    <p>Open-Source-Werkzeug, das eure Daten aussortiert, ordnet, absichert und sauber an KI-Agenten anschließt.</p>
+  </div>
+  <div class="foot"><span><b>KI Klub Werder e.V.</b></span><span>Apache-2.0</span><span>MCP-ready</span></div>
+
+  <!-- before -->
+  <div class="slip" style="left:712px;top:60px;transform:rotate(-9deg)">angebot_final_v3(2).docx</div>
+  <div class="slip" style="left:968px;top:26px;transform:rotate(7deg)">kunden_ALT.xlsx</div>
+  <div class="slip gone" style="left:1060px;top:92px;transform:rotate(-4deg)">kopie von FAQ.pdf</div>
+  <div class="slip" style="left:760px;top:120px;transform:rotate(5deg)">Preisliste 2019?.csv</div>
+  <div class="slip gone" style="left:960px;top:150px;transform:rotate(-12deg)">neu_neu_final.pptx</div>
+
+  <svg class="arrow" width="70" height="120" viewBox="0 0 70 120" fill="none" stroke="#10262a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 6 C 58 26, 58 74, 30 104"/><path d="M28 86 L30 105 L48 98"/>
+  </svg>
+
+  <!-- after -->
+  <div class="drawer">
+    <div class="spine" style="height:268px"><span><b>FAQ</b> · anna</span><span>2026-10</span></div>
+    <div class="spine" style="height:250px"><span><b>SOP</b> · jonas</span><span>2026-09</span></div>
+    <div class="spine" style="height:276px"><span><b>Policy</b> · lea</span><span>2026-10</span></div>
+    <div class="spine" style="height:240px"><span><b>Kunden</b> · crm</span><span>täglich</span></div>
+    <div class="spine" style="height:260px"><span><b>Support</b> · tom</span><span>2026-10</span></div>
+  </div>
+</div>
+</body></html>

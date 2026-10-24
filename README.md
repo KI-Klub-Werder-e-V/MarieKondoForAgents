@@ -1,165 +1,193 @@
-# MarieKondoFürAgenten (KonMari-Kit)
+<p align="center"><img src="docs/assets/banner.png" alt="Links ein Haufen schief liegender Dateien wie angebot_final_v3(2).docx und kunden_ALT.xlsx, rechts dieselben Daten aufrecht in einer Box, jede mit Kategorie, Verantwortlicher Person und Datum beschriftet." width="100%"></p>
 
-Dieser Ordner enthält das KonMari-Kit (Planung und Code) des KI Klub Werder e.V. Das Kit ist ein Open-Source-Werkzeug mit einer festen Methode: Es bereitet die Daten **eines** Pilot-Anwendungsfalls so auf, dass KI-Agenten sie zuverlässig nutzen können. Die Grundidee steht in `research/00-quelle.md`: erst festlegen, worum es geht, dann aussortieren, nach Kategorien aufräumen, vereinheitlichen, anreichern, absichern, anbinden und am Ende mit echten Fragen prüfen.
+<p align="center">
+  <a href="https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="Lizenz: Apache-2.0" src="https://img.shields.io/badge/Lizenz-Apache--2.0-1a7a83"></a>
+  <img alt="Python 3.12" src="https://img.shields.io/badge/Python-3.12-1a7a83">
+  <img alt="MCP" src="https://img.shields.io/badge/Agenten-MCP-1a7a83">
+  <img alt="DSGVO-bewusst" src="https://img.shields.io/badge/DSGVO-bewusst-1a7a83">
+</p>
 
-## Inhalt
+# MarieKondoFürAgenten
 
-- `research/` – die Quelle (`00-quelle.md`) und je Change eine Recherche-Notiz mit den Quellen
-- `openspec/changes/c01-…` bis `c09-…` – neun OpenSpec-Changes in der Reihenfolge der Umsetzung, jeweils mit `proposal.md`, `design.md`, `tasks.md` und `specs/`
-- `src/konmari/` – das Kommandozeilen-Werkzeug `konmari`, `tests/` – Tests, `docs/` – Anleitungen, `examples/` – erfundene Beispiele
-- `openspec/ROADMAP.md` – Übersicht aller Changes, Abdeckungsmatrix, gemeinsames Vokabular, offene Fragen
+**Euer Agent ist nur so gut wie die Ablage, aus der er liest.**
 
-## Benutzung
+Deutsch · [English](README.en.md)
 
-Installation (Python 3.12, [uv](https://docs.astral.sh/uv/)):
+Ein KI-Agent, der auf euer SharePoint, euer CRM und eure Netzlaufwerke losgelassen wird, findet
+dort `angebot_final_v3(2).docx`, drei Preislisten aus drei Jahren und eine Kundentabelle, die
+zuletzt 2021 jemand gepflegt hat. Dann antwortet er überzeugt und falsch. Das liegt selten am
+Modell, sondern meist an den Daten.
 
-```
-uv sync
-uv run konmari --help
-```
+Das **KonMari-Kit** räumt genau das auf, mit der Methode von Marie Kondo, übersetzt für
+Daten: erst entscheiden, wofür aufgeräumt wird, dann aussortieren, nach Kategorie ordnen,
+jedem Teil einen Platz und eine verantwortliche Person geben und erst danach anschließen.
+Am Ende steht ein MCP-Server, über den eure Agenten nur noch aktuelle, freigegebene, gut
+beschriebene Daten sehen, und der „Ich weiß es nicht“ sagen darf, statt zu raten.
 
-Schritt 1, Pilot-Charta (Anleitung: [docs/guide.de.md](docs/guide.de.md), Beispiel: `examples/verein-faq-assistant/`):
+Ein Projekt des [KI Klub Werder e. V.](https://github.com/KI-Klub-Werder-e-V), Apache-2.0.
 
-```
-konmari charter init --template minimal --lang de   # Vorlage charter.yaml anlegen
-konmari charter validate                            # prüfen (Schema, RACI, Datenschutz, Datenumfang)
-konmari charter approve --as <id>                   # freigeben (Accountable für charter_approval)
-konmari charter amend --reason "..." --as <id>      # neue Fassung nach der Freigabe
-konmari charter diff 1 2                            # Fassungen vergleichen (auch: show, log, status)
-konmari metrics validate                            # Kennzahlen und Golden Set prüfen
-konmari metrics approve --as <id>                   # Kennzahlen freigeben
-konmari metrics baseline <metrik> --value 0.4 --method "..." --as <id>
-konmari metrics measure <metrik> --kind gate --step discard --value 0.7 --method "..." --as <id>
-konmari metrics report --format json              # Stand je Kennzahl und Pilot-Ergebnis (oder md)
-konmari charter gate --step inventory               # Freigabe-Prüfung für spätere Schritte (Exit 0 = ok)
-```
+## Macht es eurem Agenten Freude?
 
-Schritt 2, Inventur und Kategorien (Anleitung: [docs/inventory-guide.de.md](docs/inventory-guide.de.md)):
+Jede Datei, jede Tabelle und jede Quelle muss durch denselben Test. Sechs Fragen, jede mit
+0 bis 3 Punkten bewertet, mit Belegen:
 
-```
-konmari inventory source add --connector sql --locator <url> --secret-ref env:PW --as <id>  # nur Quellen aus der Charta
-konmari inventory scan                              # nur lesend; Personendaten-Hinweise lokal (Presidio)
-konmari inventory import <datei.csv> --as <id>      # Systeme ohne Konnektor
-konmari inventory set <asset> --owner <id> --update-frequency P1M --as <id>
-konmari inventory tier <asset> --confirm --as <id>  # Schutzstufe bestätigen (oder --set ... --reason ...)
-konmari inventory report --gate                     # Vollständigkeit (auch: --csv, waive, export als DCAT)
-konmari categories suggest --as <id>                # Vorschläge, dann accept/assign/reject/revert
-konmari categories order --propose --as <id>        # Reihenfolge nach Risiko, dann categories approve
-konmari categories handoff                          # Übergabe an Schritt 3 (Exit 0 = ok)
-```
+| Frage | Was das Kit prüft |
+|---|---|
+| Ist es maßgeblich und aktuell? | Änderungsdatum gegen die vereinbarte Aktualisierungsfrequenz, überholte Fassungen |
+| Gehört es jemandem? | eine benannte verantwortliche Person, die es pflegt |
+| Ist die Bedeutung klar? | Spalten und Begriffe stehen im Glossar, nicht nur `kd_st_2` |
+| Findet ein Agent den richtigen Ausschnitt? | sinnvoll geschnittene Textabschnitte, saubere Tabellenschemata |
+| Sind Widersprüche geklärt? | Regel, welche Quelle bei Konflikten gewinnt |
+| Sind die Rechte klar? | Berechtigungen der Quelle reisen mit den Daten bis in den Index |
 
-Schritt 3, Freude-Test (Anleitung: [docs/scorecard-guide.de.md](docs/scorecard-guide.de.md)):
+Das Ergebnis ist ein Vorschlag **behalten**, **reparieren** oder **aussortieren**. Den
+Vorschlag bestätigt immer ein Mensch, und jede Entscheidung lässt sich rückgängig machen.
 
-```
-konmari score evidence <asset> --kind acl_snapshot --data '{"principals": [...]}' --ref <ref> --as <id>  # Belege (auch: score ingest --soda/--odcs)
-konmari score --as <id>                             # sechs Kriterien je Asset, Vorschlag keep/fix/discard
-konmari review list --status proposed               # dann review accept|override|reverse <asset> --as <id>
-konmari score fix-done <asset> <kriterium> --as <id>  # neu bewerten (auch: score --changed, score alert)
-konmari scorecard report --format json              # Assets und Kategorie-Reife (md, csv, json)
-```
+## Vorher und nachher
 
-Schritt 4, Aussortieren (Anleitung: [docs/discard-guide.de.md](docs/discard-guide.de.md)):
+| | Vorher | Mit dem KonMari-Kit |
+|---|---|---|
+| Format | ganze Dokumente, rohe Tabellen | geschnittene Abschnitte, versionierte Datenprodukte |
+| Metadaten | Dateiname | Quelle, Datum, Typ, verantwortliche Person, Aktualität, Definitionen |
+| Zugriff | alles, was das Dienstkonto sieht | Leserechte je Agent, Rechte der Quelle bleiben erhalten |
+| Widersprüche | Dubletten und drei Wahrheiten | entdoppelt, eine führende Quelle je Feld |
+| Aktualität | „hat das mal jemand aktualisiert?“ | geplante Aktualisierung mit Änderungsverfolgung |
+| Auffindbarkeit | in Silos vergraben | im Katalog beschrieben und per MCP abrufbar |
 
-```
-konmari discard detect --items items.jsonl --as <id>   # Dubletten, Fassungen, außerhalb des Piloten, sensible Inhalte
-konmari discard calibrate --detector minhash --sample 60 --as <id>   # dann --labels pairs.csv --threshold 0.8
-konmari discard propose --as <id>                   # Vorschläge; ändern nichts
-konmari discard approve <vorschlag> --as <id>       # oder reject, bulk-approve, cancel
-konmari discard execute --as <id>                   # archivieren, ausschließen, zur Maskierung, löschen
-konmari discard restore <element> --as <id>         # auch: history, log verify, check-propagation, report
-konmari retention rule add ... --as <id>            # Fristen je Kategorie (Compliance), dann rule approve
-konmari retention check --as <id>                   # abgelaufene Fristen, auch im Archiv (auch: retention hold)
-```
+## So räumt ihr auf
 
-Schritt 5, Vereinheitlichen und führende Quelle (Anleitung: [docs/standardize-guide.de.md](docs/standardize-guide.de.md)):
+Neun Schritte, immer für **einen** Anwendungsfall, zum Beispiel einen FAQ-Assistenten für
+die Geschäftsstelle. Jeder Schritt prüft, ob der vorige sauber abgeschlossen ist. Das Kit
+lässt euch also nicht anreichern, was ihr noch nicht aussortiert habt.
 
 ```
-konmari normalize --records records.jsonl --specs normalize/ --as <id>   # Rohwert bleibt, kanonischer Wert kommt dazu
-konmari normalize quarantine list --as <id>         # dann quarantine resolve|revert <id> --value ... --as <id>
-konmari resolve run --entity customer --config resolve.yaml --as <id>    # Dubletten über Systeme hinweg (Splink)
-konmari resolve review export --entity customer -o pairs.csv           # dann review import pairs.csv --as <id>
-konmari resolve publish --entity customer --known known.csv --as <id>  # nur bei Precision/Recall über der Untergrenze
-konmari policy load --file policy/customer.yaml --as <id>              # neue Fassung "pending" mit Auswirkung
-konmari policy approve customer --version 1 --as <id>                  # Feldverantwortliche/r gibt frei (auch: rollback)
-konmari policy check --exposure exposure.yaml       # jedes für Agenten sichtbare Feld braucht eine Regel
-konmari policy build customer                       # Golden Records mit Herkunft (auch: policy golden <entity> <cluster>)
-konmari conflicts list --as <id>                    # dann conflicts resolve <id> --source erp --ticket IT-4711 --as <id>
-konmari conflicts report --overdue                  # überfällige Konflikte (auch: accept, revert, export-tickets)
+ 1  charter      Wofür räumen wir auf? Anwendungsfall, Rollen, Datenschutz, Erfolgskennzahlen
+ 2  inventory    Was liegt wo? Quellen über alle Systeme, sortiert nach Kategorie statt Ablageort
+ 3  score        Macht es Freude? Sechs Fragen, Vorschlag behalten / reparieren / aussortieren
+ 4  discard      Danke und tschüss: Dubletten, alte Fassungen, Irrelevantes ins Archiv
+ 5  normalize    Eine Wahrheit: Datumsangaben, IDs und Namen vereinheitlichen, führende Quelle festlegen
+ 6  chunk/enrich Ordnen: Abschnitte schneiden, Metadaten anheften, Glossar pflegen
+ 7  govern       Absichern: Rechte, Maskierung personenbezogener Daten, manipulationssicheres Protokoll
+ 8  product/serve Anschließen: Datenprodukte und ein MCP-Server nur zum Lesen
+ 9  eval/monitor Prüfen: echte Fragen, Belege, Abstinenz, Aktualität laufend überwachen
 ```
 
-Schritt 6, Strukturieren und Anreichern (Anleitung: [docs/enrich-guide.de.md](docs/enrich-guide.de.md)):
+Die Reihenfolge der Kategorien folgt dem Risiko: erst die öffentliche FAQ, dann die Verträge,
+ganz zum Schluss alles mit besonders schützenswerten Daten nach Art. 9 DSGVO.
 
-```
-konmari chunk run --dry-run --as <id>               # Chunks und Bericht, schreibt nichts (dann ohne --dry-run)
-konmari chunk profile set <kategorie> --max-tokens 600 --reason "..." --as <id>   # auch: profile show, rollback <lauf>
-konmari enrich schema load schema.yaml --as <id>    # für Agenten sichtbare Tabellen mit Spaltenbeschreibungen
-konmari enrich run --as <id>                        # Metadaten-Umschlag, Vollständigkeit, ACL-Tags, Lineage
-konmari enrich override <element> --field owner --value <id> --reason "..." --as <id>   # auch: lineage, rollback
-konmari glossary stewards --steward <id> --as <id>  # dann glossary add|submit|approve|harvest|revert|deprecate
-konmari glossary export --format skos -o glossar.ttl   # nur freigegebene Begriffe (auch: --format json, report)
-```
+## Schnellstart
 
-Schritt 7, Absichern (Anleitung: [docs/govern-guide.de.md](docs/govern-guide.de.md)):
+Voraussetzungen: Python 3.12 und [uv](https://docs.astral.sh/uv/). Das Beispiel ist ein
+erfundener Sportverein mit einem FAQ-Assistenten für die Geschäftsstelle.
 
-```
-konmari govern policy seed --as <id>                # Quellen-Richtlinie je Kategorie, dann policy edit|approve|revert|show
-konmari govern agent <agent> --scope read:<kategorie> --as <id>   # Agent mit kleinsten Rechten (auch: govern grant)
-konmari govern acl-sync --as <id>                   # Berechtigungen aus den Quellen, Entzug wirkt überall
-konmari govern scan --as <id>                       # Personendaten finden (dann review list|confirm|reject|revert)
-konmari govern label export --category <kategorie> --as <id>   # Muster auszeichnen, dann label import <datei> --as <id>
-konmari govern mask --as <id>                       # maskierter Agenten-Index (auch: govern reidentify, nur compliance)
-konmari govern check --as <id>                      # Leck-Test und Freigabe je Quelle (auch: leak-test, status, ropa)
-konmari audit verify                                # ein Prüfprotokoll für alle Schritte (auch: export, purge)
+```bash
+git clone https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten
+cd MarieKondoFuerAgenten && uv sync
+cd examples/verein-faq-assistant
+
+uv run konmari charter validate          # Charta prüfen: Rollen, Datenschutz, Datenumfang
+uv run konmari charter approve --as anna # die verantwortliche Person gibt frei
+uv run konmari metrics validate          # Erfolgskennzahlen und Fragenkatalog prüfen
+uv run konmari metrics approve --as ben
+uv run konmari charter gate --step inventory
 ```
 
-Schritt 8, Anbinden (Anleitung: [docs/connect-guide.de.md](docs/connect-guide.de.md)):
+Das letzte Kommando scheitert, und das ist Absicht:
 
 ```
-konmari product init <id> --category <kategorie> --owner <id> --use-case "<anwendungsfall>"   # ODPS + ODCS anlegen
-konmari product lint products/<id> --as <id>        # Schemas, Pflichtangaben, Vorstufen; legt den Entwurf an
-konmari product refresh <id> --as <id>              # geänderte Zeilen laden, testen, erst dann übernehmen (auch: all)
-konmari product test <id>                           # Qualitätsregeln (auch: diff products/<id> für die Semver-Prüfung)
-konmari product approve <id> --version 1.0.0 --as <owner>    # dann product publish <id> --version 1.0.0 --as <owner>
-konmari product publish <id> --rollback --reason "..." --as <owner>   # auch: deprecate, list --json, schedule
-konmari serve --check-pins                          # neue Werkzeuge prüfen, dann serve --approve-tool <name> --as <id>
-konmari serve --stdio                               # MCP-Server für einen lokalen Agenten (oder --http mit OAuth)
+unmet: metrics: must_have metric 'answer_accuracy' has no baseline or measurement plan
 ```
 
-Schritt 9, Prüfen und Beobachten (Anleitung: [docs/evaluate-guide.de.md](docs/evaluate-guide.de.md), CI-Beispiel: `examples/ci/konmari-eval.yml`):
+Ohne Ausgangswert gibt es keinen Aufräumbeginn, denn sonst weiß hinterher niemand, ob es
+etwas gebracht hat. Wie es weitergeht, steht Schritt für Schritt in der
+[Anleitung](docs/guide.de.md). Alle Befehle auf einen Blick: [`docs/cli.de.md`](docs/cli.de.md).
 
+## Was drinsteckt
+
+- **Ein Katalog für alle Entscheidungen.** DuckDB lokal, Postgres 16 im Betrieb, dieselben
+  Migrationen. Jede Entscheidung mit Person, Rolle, Zeitpunkt und Begründung.
+- **Menschen entscheiden, das Kit schlägt vor.** Aussortieren, Maskieren, Löschen und
+  Veröffentlichen brauchen eine Freigabe der zuständigen Rolle aus der Charta.
+- **Alles umkehrbar, alles protokolliert.** Archiv statt Papierkorb, Wiederherstellen per
+  Befehl, ein hash-verkettetes Prüfprotokoll (`konmari audit verify`).
+- **Dubletten auf drei Ebenen:** identische Dateien, fast gleiche Texte (MinHash) und
+  inhaltlich gleiche Texte (Embeddings, optional).
+- **Datenschutz eingebaut.** Personendaten werden lokal mit Presidio und spaCy erkannt,
+  Löschfristen und Aufbewahrungspflichten je Kategorie, Pseudonymisierung mit Schlüssel statt
+  Rückübersetzungstabelle, Verzeichnis der Verarbeitungstätigkeiten als Export.
+- **Offene Standards statt Eigenbau:** DCAT für das Inventar, OpenLineage für die Herkunft,
+  ODPS und ODCS für Datenprodukte, SKOS für das Glossar, MCP für Agenten.
+- **Selbst gehostet, ohne Pflicht-Cloud.** Modelle für Embeddings und Bewertung laufen lokal;
+  eine gehostete API ist per Konfiguration möglich.
+
+## Für wen ist es gedacht?
+
+- Vereine, Verbände, kleine und mittlere Unternehmen und Verwaltungen, die einen ersten
+  Agenten auf ihre eigenen Daten loslassen wollen
+- Freiwillige, IT-Verantwortliche und Berater:innen, die so ein Projekt begleiten
+- alle, die vorher wissen wollen, welche Daten der Agent sieht, und das belegen müssen
+
+Gearbeitet wird auf der Kommandozeile. Für die Freigaben braucht es keine Programmierkenntnisse,
+aber jemanden, der die Befehle ausführt.
+
+## Ehrlicher Stand
+
+Das Projekt ist jung (Version 0.1, Oktober 2026). Es wurde spezifikationsgetrieben mit
+[OpenSpec](https://github.com/Fission-AI/OpenSpec) gebaut: neun Changes, jeder mit
+Anforderungen, Szenarien und Recherche-Notizen samt Quellen in [`research/`](research/).
+
+**Gebaut und getestet**
+
+- Alle neun Schritte sind umgesetzt, von der Charta bis zur Überwachung: 22 Befehlsgruppen,
+  686 automatische Tests (DuckDB und Postgres 16), jedes Spec-Szenario mit eigenem Test.
+- Jeder Schritt wurde nach dem Bauen von einem unabhängigen Prüfdurchlauf gegen die Spezifikation
+  gelesen; dabei wurden 8 echte Fehler gefunden und behoben, darunter einer, bei dem gelöschte
+  Daten beim nächsten Scan wieder aufgetaucht wären.
+- Drei Aufgaben sind bewusst offen: ein optionaler Debezium-Adapter für Echtzeit-Änderungen,
+  die Abstimmung einer Schnittstelle zwischen den Schritten und ein Test der Anleitung durch
+  eine Person ohne Programmierkenntnisse.
+
+**Noch nicht erprobt**
+
+- Kein Lauf gegen echte Systeme. SharePoint, CRM, Netzlaufwerke und Modelle sind gegen
+  Attrappen getestet. Empfehlung: zuerst mit einer Kopie und einem kleinen Anwendungsfall.
+- Die Schwellenwerte (zum Beispiel ab wann zwei Texte Dubletten sind) sind begründete
+  Annahmen aus der Recherche, keine Messwerte. Sie sollen nach dem ersten Pilot kalibriert werden.
+- Das deutsche spaCy-Modell `de_core_news_lg` wird in den Tests nicht geladen.
+
+**Datenschutz**
+
+Das Kit hilft beim Nachweis, ersetzt aber keine datenschutzrechtliche Prüfung. Die Charta
+fragt DSFA und Einstufung nach EU AI Act ab und blockiert die Freigabe, solange sie offen sind.
+
+## Mitmachen
+
+Gesucht sind vor allem Pilot-Erfahrungen. Wenn ihr das Kit an einem echten Anwendungsfall
+ausprobiert, schreibt uns, was geklemmt hat. Außerdem willkommen: weitere Konnektoren (Nextcloud,
+Confluence, Google Drive, weitere CRMs), bessere deutsche Beispiele und Übersetzungen.
+Fehler und Ideen bitte als [Issue](https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/issues).
+
+```bash
+uv sync && uv run pytest -q              # Tests; Postgres-Tests nutzen KONMARI_TEST_PG_URL oder ein lokales Postgres 16
+openspec validate --all --strict         # Specs prüfen
 ```
-konmari eval items import fragen.yaml --as <id>     # Golden-Set-Fragen (Protokoll-Fragen werden maskiert), dann items approve <id> --as <id>
-konmari eval set activate --as <id>                 # >= 50 Fragen, >= 20 % ohne Antwort, <= 50 % synthetisch
-konmari eval run --as <id>                          # über die MCP-Schnittstelle des Agenten (eval.yaml), auch: report
-konmari eval gate                                   # Grenzwerte und Vergleichsbasis (Exit 1 = blockiert)
-konmari eval baseline approve <lauf> --as <id>      # oder baseline revert; auch: calibrate, next-category, items retention
-konmari monitor run --as <id>                       # Aktualität, Menge, Metadaten, Dubletten, Schema (auch --dry-run, schedule)
-konmari monitor incident acknowledge <id> --reason "..." --as <id>   # oder resolve, accept-risk; auch: incidents, threshold, drift, import
-```
 
-Für die Personendaten-Hinweise einmal die Sprachmodelle laden: `uv run python -m spacy download de_core_news_lg` (Schritt 7 zusätzlich `en_core_web_lg`). SMB-Ablagen: `uv sync --extra smb`. Ragas als Bewertungsmodell: `uv sync --extra ragas`. Semantische Dubletten: `uv sync --extra semantic`, S3-Archiv: `uv sync --extra s3`, Docling-Parser: `uv sync --extra docling`.
+Neue Funktionen beginnen als OpenSpec-Change. Wie das geht und welche Regeln für Menschen und
+Agenten gelten, steht in [`CONTRIBUTING.md`](CONTRIBUTING.md) und [`AGENTS.md`](AGENTS.md).
+Echte personenbezogene Daten gehören nie ins Repository.
 
-Der Katalog liegt standardmäßig in `.konmari/catalog.duckdb`. Für Postgres 16: `uv sync --extra postgres` und `KONMARI_CATALOG=postgresql://...` oder `--catalog`. Schnittstelle für spätere Changes: [docs/gate-contract.md](docs/gate-contract.md), [docs/enrich-contract.md](docs/enrich-contract.md), [docs/governance-contract.md](docs/governance-contract.md), [docs/connect-contract.md](docs/connect-contract.md). Tests: `uv run pytest -q`.
+## Dokumentation
 
-Die Changes werden der Reihe nach umgesetzt, beginnend mit `c01-pilot-charter`:
-
-```
-/opsx:apply c01-pilot-charter
-```
-
-Danach folgen `c02-category-inventory`, `c03-joy-test-scorecard` und so weiter bis `c09-evaluate-and-monitor`. Ein späterer Change baut auf den früheren auf, deshalb bitte keinen überspringen.
-
-Nützliche Befehle:
-
-```
-openspec list                      # alle Changes mit Fortschritt
-openspec status --change <name>    # Stand eines Changes
-openspec validate --all --strict   # alle Specs prüfen
-/opsx:archive <name>               # fertigen Change archivieren
-```
-
-Vor dem Start bitte die offenen Fragen in [openspec/ROADMAP.md](openspec/ROADMAP.md) klären.
+| Thema | Wo |
+|---|---|
+| Anleitung Schritt für Schritt | [`docs/guide.de.md`](docs/guide.de.md) und die `*-guide.de.md` je Schritt |
+| Alle Befehle | [`docs/cli.de.md`](docs/cli.de.md) |
+| Roadmap, Abdeckung, gemeinsames Vokabular | [`openspec/ROADMAP.md`](openspec/ROADMAP.md) |
+| Anforderungen und Entwurf je Schritt | [`openspec/changes/`](openspec/changes/) |
+| Recherche mit Quellen | [`research/`](research/) |
+| Schnittstellen zwischen den Schritten | [`docs/*-contract.md`](docs/) |
 
 ## Lizenz
 
-Apache-2.0, siehe [LICENSE](LICENSE). Beiträge: [CONTRIBUTING.md](CONTRIBUTING.md).
+Apache-2.0, siehe [`LICENSE`](LICENSE).
