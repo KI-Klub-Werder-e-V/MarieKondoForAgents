@@ -1,14 +1,40 @@
 # MarieKondoFürAgenten (KonMari-Kit)
 
-Dieser Ordner enthält die Planung für das KonMari-Kit des KI Klub Werder e.V. Das Kit ist ein Open-Source-Werkzeug mit einer festen Methode: Es bereitet die Daten **eines** Pilot-Anwendungsfalls so auf, dass KI-Agenten sie zuverlässig nutzen können. Die Grundidee steht in `research/00-quelle.md`: erst festlegen, worum es geht, dann aussortieren, nach Kategorien aufräumen, vereinheitlichen, anreichern, absichern, anbinden und am Ende mit echten Fragen prüfen.
+Dieser Ordner enthält das KonMari-Kit (Planung und Code) des KI Klub Werder e.V. Das Kit ist ein Open-Source-Werkzeug mit einer festen Methode: Es bereitet die Daten **eines** Pilot-Anwendungsfalls so auf, dass KI-Agenten sie zuverlässig nutzen können. Die Grundidee steht in `research/00-quelle.md`: erst festlegen, worum es geht, dann aussortieren, nach Kategorien aufräumen, vereinheitlichen, anreichern, absichern, anbinden und am Ende mit echten Fragen prüfen.
 
 ## Inhalt
 
 - `research/` – die Quelle (`00-quelle.md`) und je Change eine Recherche-Notiz mit den Quellen
 - `openspec/changes/c01-…` bis `c09-…` – neun OpenSpec-Changes in der Reihenfolge der Umsetzung, jeweils mit `proposal.md`, `design.md`, `tasks.md` und `specs/`
+- `src/konmari/` – das Kommandozeilen-Werkzeug `konmari`, `tests/` – Tests, `docs/` – Anleitungen, `examples/` – erfundene Beispiele
 - `openspec/ROADMAP.md` – Übersicht aller Changes, Abdeckungsmatrix, gemeinsames Vokabular, offene Fragen
 
 ## Benutzung
+
+Installation (Python 3.12, [uv](https://docs.astral.sh/uv/)):
+
+```
+uv sync
+uv run konmari --help
+```
+
+Schritt 1, Pilot-Charta (Anleitung: [docs/guide.de.md](docs/guide.de.md), Beispiel: `examples/verein-faq-assistant/`):
+
+```
+konmari charter init --template minimal --lang de   # Vorlage charter.yaml anlegen
+konmari charter validate                            # prüfen (Schema, RACI, Datenschutz, Datenumfang)
+konmari charter approve --as <id>                   # freigeben (Accountable für charter_approval)
+konmari charter amend --reason "..." --as <id>      # neue Fassung nach der Freigabe
+konmari charter diff 1 2                            # Fassungen vergleichen (auch: show, log, status)
+konmari metrics validate                            # Kennzahlen und Golden Set prüfen
+konmari metrics approve --as <id>                   # Kennzahlen freigeben
+konmari metrics baseline <metrik> --value 0.4 --method "..." --as <id>
+konmari metrics measure <metrik> --kind gate --step discard --value 0.7 --method "..." --as <id>
+konmari metrics report --format json              # Stand je Kennzahl und Pilot-Ergebnis (oder md)
+konmari charter gate --step inventory               # Freigabe-Prüfung für spätere Schritte (Exit 0 = ok)
+```
+
+Der Katalog liegt standardmäßig in `.konmari/catalog.duckdb`. Für Postgres 16: `uv sync --extra postgres` und `KONMARI_CATALOG=postgresql://...` oder `--catalog`. Schnittstelle für spätere Changes: [docs/gate-contract.md](docs/gate-contract.md). Tests: `uv run pytest -q`.
 
 Die Changes werden der Reihe nach umgesetzt, beginnend mit `c01-pilot-charter`:
 

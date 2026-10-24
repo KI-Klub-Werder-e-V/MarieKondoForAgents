@@ -1,0 +1,26 @@
+# Fictional example. Targets are the organization's own choice, not benchmarks.
+charter_id: verein-faq-assistant
+golden_set: {file: golden-set.yaml}
+metrics:
+  - {id: answer_accuracy, name: Correct answers on the golden set, family: answer_quality, unit: ratio,
+     formula: correct answers / answerable golden questions, data_source: golden-set.yaml,
+     method: two reviewers grade each answer against the expected answer, owner: clara,
+     target: 0.85, direction: ">=", tier: must_have, cadence: each phase gate}
+  - {id: abstention_rate, name: Correct "I don't know" on unanswerable questions, family: abstention, unit: ratio,
+     formula: correct abstentions / abstain or flag_conflict questions, data_source: golden-set.yaml,
+     method: reviewer checks that the agent declines or flags the conflict, owner: clara,
+     target: 0.8, direction: ">=", tier: must_have, cadence: each phase gate}
+  - {id: time_to_answer, name: Median time to answer a member question, family: business_outcome, unit: minutes,
+     formula: median minutes from question received to answer sent, data_source: office ticket log,
+     method: sample of 50 questions per period, owner: ben,
+     target: 5, direction: "<=", tier: must_have, cadence: monthly}
+  - {id: escalation_rate, name: Questions escalated to the board, family: business_outcome, unit: ratio,
+     formula: escalated questions / all questions, data_source: office ticket log,
+     method: count over one month, owner: ben, target: 0.1, direction: "<=", tier: target, cadence: monthly}
+  - {id: joy_test_pass, name: In-scope assets passing the joy test, family: data_readiness, unit: ratio,
+     formula: assets with verdict keep / in-scope assets, data_source: readiness catalog (c03),
+     method: scorecard rollup, owner: clara, target: 0.9, direction: ">=", tier: target, cadence: each phase gate}
+  - {id: human_approved_decisions, name: Discard and retention decisions approved by a human, family: governance,
+     unit: "%", formula: human-approved decisions / all discard and retention decisions * 100,
+     data_source: audit trail, method: audit query, owner: ben, target: 100, direction: ">=", tier: must_have,
+     cadence: each phase gate}

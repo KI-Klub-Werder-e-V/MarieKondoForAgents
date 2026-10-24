@@ -1,0 +1,72 @@
+# Fictional example engagement. All people, contacts and sources are synthetic.
+charter_id: verein-faq-assistant
+title: FAQ assistant for the office of the fictional TSV Musterstadt e.V.
+language: en
+
+use_cases:
+  - name: Member FAQ assistant
+    purpose: Volunteers in the club office answer recurring member questions (fees, training times, forms) faster and consistently.
+    expected_benefit: Shorter time to answer and fewer questions escalated to the board.
+    deployment_setting:
+      agent_users: [office volunteers]
+      access: read_only
+      channel: internal chat in the club office
+    in_scope:
+      - questions about membership fees and payment dates
+      - training times and locations per department
+      - where to find forms and how to submit them
+    out_of_scope:
+      - decisions on individual fee reductions
+      - anything about individual members (no member records in scope)
+      - legal advice
+    misuse_cases:
+      - using the agent to look up personal details of members
+      - treating agent answers as binding board decisions
+
+stakeholders:
+  - {id: anna, name: Anna Beispiel, contact: vorstand@example.org, org_unit: Board, roles: [sponsor]}
+  - {id: ben, name: Ben Muster, contact: geschaeftsstelle@example.org, org_unit: Club office, roles: [use_case_owner, data_owner]}
+  - {id: clara, name: Clara Probe, contact: training@example.org, org_unit: Sports departments, roles: [data_owner, data_steward]}
+  - {id: dirk, name: Dirk Test, contact: it@example.org, org_unit: IT volunteers, roles: [data_custodian]}
+  - {id: eva, name: Eva Fiktiv, contact: datenschutz@example.org, org_unit: Data protection, roles: [compliance]}
+  - {id: finn, name: Finn Demo, contact: buero@example.org, org_unit: Club office, roles: [agent_user]}
+  - {id: gina, name: Gina Helfer, contact: gina@example.net, org_unit: External volunteer, roles: [facilitator]}
+
+raci:
+  charter_approval:           {A: [anna], R: [ben, gina], C: [eva], I: [finn]}
+  metric_approval:            {A: [ben], R: [clara, gina], C: [finn], I: [anna]}
+  source_inclusion:           {A: [ben], R: [dirk], C: [eva, clara], I: [gina]}
+  retention_discard_approval: {A: [ben], R: [clara], C: [eva], I: [dirk]}
+  sot_conflict_resolution:    {A: [ben], R: [clara], C: [finn], I: [gina]}
+  dpia_decision:              {A: [eva], R: [eva], C: [ben, dirk], I: [anna]}
+  go_live_approval:           {A: [anna], R: [ben], C: [eva, dirk], I: [finn]}
+
+compliance:
+  purpose_of_processing: Answering general member questions from club documents (FAQ, fee rules, training plans).
+  personal_data_categories: none
+  special_categories_expected: false
+  dpia_screening:
+    result: not_required
+    reason: Only general club documents without member data are in scope; no WP248 criterion applies.
+    decided_by: eva
+  ai_act:
+    classification: minimal
+    reason: Internal FAQ assistant for volunteers; no Annex III use and no decisions about persons.
+  ai_literacy_briefing: {status: planned, date: "2026-02-02"}
+
+cadence:
+  kickoff: "2026-01-12"
+  working_session_interval_days: 7
+  steering: {interval_days: 14, attendees: [anna, eva, ben]}
+  phase_gate_review: {after_each_step: true}
+  pilot_close: "2026-06-30"
+  post_pilot_review: {interval_days: 90, owner: ben}
+
+data_scope:
+  sources:
+    - {id: office-share, connector: fileshare, locator: "smb://nas.example.org/office/faq", categories: [kb-and-sops]}
+    - {id: fee-rules, connector: csv-import, locator: exports/fee-rules.csv, categories: [policies-and-contracts]}
+  category_extensions: []
+  categories:
+    - {id: kb-and-sops, approver: ben, reviewers: [clara, finn]}
+    - {id: policies-and-contracts, approver: ben, reviewers: [clara]}

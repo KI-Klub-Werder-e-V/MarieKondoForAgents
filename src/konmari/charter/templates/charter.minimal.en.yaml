@@ -1,0 +1,42 @@
+# KonMari-Kit pilot charter (minimal template): cadence and RACI are pre-filled.
+# Replace every <FILL ...> placeholder, then run: konmari charter validate
+charter_id: my-pilot
+use_cases:
+  - name: <FILL name of the use case>
+    purpose: <FILL what the agent helps with>
+    deployment_setting: {agent_users: [<FILL agent users>], access: read_only}
+    in_scope: [<FILL in-scope task>]
+    out_of_scope: [<FILL out-of-scope item>]
+    misuse_cases: [<FILL misuse case>]
+stakeholders:
+  - {id: sponsor, name: <FILL name>, contact: <FILL contact>, org_unit: <FILL unit>, roles: [sponsor]}
+  - {id: owner, name: <FILL name>, contact: <FILL contact>, org_unit: <FILL unit>, roles: [use_case_owner, data_owner]}
+  - {id: dpo, name: <FILL name>, contact: <FILL contact>, org_unit: <FILL unit>, roles: [compliance]}
+  - {id: user, name: <FILL name>, contact: <FILL contact>, org_unit: <FILL unit>, roles: [agent_user, data_steward]}
+raci:
+  charter_approval:           {A: [sponsor], R: [owner]}
+  metric_approval:            {A: [owner], R: [user]}
+  source_inclusion:           {A: [owner], R: [owner], C: [dpo]}
+  retention_discard_approval: {A: [owner], R: [user], C: [dpo]}
+  sot_conflict_resolution:    {A: [owner], R: [user]}
+  dpia_decision:              {A: [dpo], R: [dpo]}
+  go_live_approval:           {A: [sponsor], R: [owner], C: [dpo]}
+compliance:
+  purpose_of_processing: <FILL purpose of processing>
+  personal_data_categories: none
+  special_categories_expected: false
+  dpia_screening: {result: pending, reason: <FILL reason (20+ characters)>, decided_by: dpo}
+  ai_act: {classification: pending, reason: <FILL reason (20+ characters)>}
+  ai_literacy_briefing: {status: planned, date: "2026-01-15"}
+cadence:
+  kickoff: "2026-01-12"
+  working_session_interval_days: 7
+  steering: {interval_days: 14, attendees: [sponsor, dpo]}
+  phase_gate_review: {after_each_step: true}
+  pilot_close: "2026-06-30"
+  post_pilot_review: {interval_days: 90, owner: owner}
+data_scope:
+  sources:
+    - {id: <FILL source id>, connector: fileshare, locator: <FILL path or URL>}
+  categories:
+    - {id: kb-and-sops, approver: owner, reviewers: [user]}

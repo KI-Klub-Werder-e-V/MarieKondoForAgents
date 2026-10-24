@@ -1,0 +1,79 @@
+# KonMari-Kit pilot charter (full template).
+# Replace every <FILL ...> placeholder, then run: konmari charter validate
+# One charter = one pilot use case. A second use case needs its own charter.
+charter_id: my-pilot            # lowercase letters, digits, dashes; never changes
+title: <FILL short title of the pilot>
+language: en
+
+use_cases:
+  - name: <FILL name of the use case>
+    purpose: <FILL what the agent helps with and why>
+    expected_benefit: <FILL the business benefit you expect>
+    deployment_setting:
+      agent_users: [<FILL who uses the agent (e.g. support staff)>]
+      access: read_only           # read_only | read_write
+      channel: <FILL where the agent runs, e.g. internal chat>
+    in_scope:                     # task or question types the agent handles
+      - <FILL in-scope task>
+    out_of_scope:                 # at least one explicit exclusion
+      - <FILL out-of-scope item>
+    misuse_cases:                 # foreseeable misuse (NIST AI RMF MAP 1.1)
+      - <FILL misuse case>
+
+# Stakeholder register. Roles: sponsor, use_case_owner, data_owner, data_steward,
+# data_custodian, compliance, agent_user, facilitator. Required: sponsor, use_case_owner,
+# data_owner, compliance, agent_user. A facilitator is never Accountable.
+stakeholders:
+  - {id: sponsor, name: <FILL name>, contact: <FILL email or phone>, org_unit: <FILL unit>, roles: [sponsor]}
+  - {id: owner, name: <FILL name>, contact: <FILL email or phone>, org_unit: <FILL unit>, roles: [use_case_owner, data_owner]}
+  - {id: steward, name: <FILL name>, contact: <FILL email or phone>, org_unit: <FILL unit>, roles: [data_steward]}
+  - {id: it, name: <FILL name>, contact: <FILL email or phone>, org_unit: <FILL unit>, roles: [data_custodian]}
+  - {id: dpo, name: <FILL name>, contact: <FILL email or phone>, org_unit: <FILL unit>, roles: [compliance]}
+  - {id: user, name: <FILL name>, contact: <FILL email or phone>, org_unit: <FILL unit>, roles: [agent_user]}
+  - {id: facilitator, name: <FILL name>, contact: <FILL email or phone>, org_unit: <FILL unit or external>, roles: [facilitator]}
+
+# RACI: exactly one A (Accountable) and at least one R (Responsible) per activity.
+raci:
+  charter_approval:           {A: [sponsor], R: [owner, facilitator], C: [dpo], I: [user]}
+  metric_approval:            {A: [owner], R: [steward, facilitator], C: [user], I: [sponsor]}
+  source_inclusion:           {A: [owner], R: [it], C: [dpo, steward], I: [facilitator]}
+  retention_discard_approval: {A: [owner], R: [steward], C: [dpo], I: [it]}
+  sot_conflict_resolution:    {A: [owner], R: [steward], C: [user], I: [facilitator]}
+  dpia_decision:              {A: [dpo], R: [dpo], C: [owner, it], I: [sponsor]}
+  go_live_approval:           {A: [sponsor], R: [owner], C: [dpo, it], I: [user]}
+
+# DSGVO / EU AI Act screening. The organization decides; the kit only records it.
+compliance:
+  purpose_of_processing: <FILL purpose of processing (GDPR Art. 5(1)(b))>
+  personal_data_categories: none        # "none" or a list, e.g. [contact data, membership data]
+  special_categories_expected: false    # GDPR Art. 9 data (health, religion, ...)
+  dpia_screening:
+    result: pending                     # required | not_required | pending (pending blocks approval)
+    reason: <FILL reason, at least 20 characters>
+    decided_by: dpo
+  ai_act:
+    classification: pending             # minimal | limited | high | prohibited | pending
+    reason: <FILL reason, at least 20 characters>
+  ai_literacy_briefing:                 # EU AI Act Art. 4, for the agent users
+    status: planned                     # done | planned
+    date: "2026-01-15"
+
+cadence:
+  kickoff: "2026-01-12"
+  working_session_interval_days: 7
+  steering: {interval_days: 14, attendees: [sponsor, dpo, owner]}
+  phase_gate_review: {after_each_step: true}
+  pilot_close: "2026-06-30"
+  post_pilot_review: {interval_days: 90, owner: owner}   # the engagement is not a one-off
+
+# Data scope. Category IDs: kb-and-sops, customer-records, policies-and-contracts,
+# financial-ops-metrics, support-history (or your own under category_extensions).
+data_scope:
+  sources:
+    - id: <FILL source id>
+      connector: sharepoint             # sharepoint | sql | fileshare | csv-import
+      locator: <FILL URL, path or connection name>
+      categories: [kb-and-sops]
+  category_extensions: []
+  categories:
+    - {id: kb-and-sops, approver: owner, reviewers: [steward, user]}

@@ -1,0 +1,82 @@
+# KonMari-Kit Pilot-Charta (ausführliche Vorlage).
+# Jeden Platzhalter <FILL ...> ersetzen, dann ausführen: konmari charter validate
+# Eine Charta = ein Pilot-Anwendungsfall. Ein zweiter Anwendungsfall braucht eine eigene Charta.
+# Die Feldnamen bleiben englisch, die Inhalte dürfen deutsch sein.
+charter_id: mein-pilot          # Kleinbuchstaben, Ziffern, Bindestriche; ändert sich nie
+title: <FILL kurzer Titel des Piloten>
+language: de
+
+use_cases:
+  - name: <FILL Name des Anwendungsfalls>
+    purpose: <FILL wobei der Agent hilft und warum>
+    expected_benefit: <FILL erwarteter Nutzen für die Organisation>
+    deployment_setting:
+      agent_users: [<FILL wer den Agenten nutzt (z. B. Geschäftsstelle)>]
+      access: read_only           # read_only (nur lesen) | read_write (auch schreiben)
+      channel: <FILL wo der Agent läuft (z. B. interner Chat)>
+    in_scope:                     # Aufgaben oder Fragetypen, die der Agent übernimmt
+      - <FILL Aufgabe im Umfang>
+    out_of_scope:                 # mindestens ein ausdrücklicher Ausschluss
+      - <FILL ausgeschlossene Aufgabe>
+    misuse_cases:                 # vorhersehbarer Missbrauch (NIST AI RMF MAP 1.1)
+      - <FILL Missbrauchsfall>
+
+# Stakeholder-Register. Rollen: sponsor (Auftraggeber), use_case_owner (fachlich verantwortlich),
+# data_owner (Dateneigentümer), data_steward (Fachexperte), data_custodian (IT),
+# compliance (Datenschutz), agent_user (Nutzer), facilitator (Begleitung).
+# Pflicht: sponsor, use_case_owner, data_owner, compliance, agent_user.
+# Die Begleitung (facilitator) ist nie Accountable.
+stakeholders:
+  - {id: sponsor, name: <FILL Name>, contact: <FILL E-Mail oder Telefon>, org_unit: <FILL Bereich>, roles: [sponsor]}
+  - {id: owner, name: <FILL Name>, contact: <FILL E-Mail oder Telefon>, org_unit: <FILL Bereich>, roles: [use_case_owner, data_owner]}
+  - {id: steward, name: <FILL Name>, contact: <FILL E-Mail oder Telefon>, org_unit: <FILL Bereich>, roles: [data_steward]}
+  - {id: it, name: <FILL Name>, contact: <FILL E-Mail oder Telefon>, org_unit: <FILL Bereich>, roles: [data_custodian]}
+  - {id: dsb, name: <FILL Name>, contact: <FILL E-Mail oder Telefon>, org_unit: <FILL Bereich>, roles: [compliance]}
+  - {id: nutzer, name: <FILL Name>, contact: <FILL E-Mail oder Telefon>, org_unit: <FILL Bereich>, roles: [agent_user]}
+  - {id: begleitung, name: <FILL Name>, contact: <FILL E-Mail oder Telefon>, org_unit: <FILL Bereich oder extern>, roles: [facilitator]}
+
+# RACI: je Aktivität genau ein A (Accountable) und mindestens ein R (Responsible).
+raci:
+  charter_approval:           {A: [sponsor], R: [owner, begleitung], C: [dsb], I: [nutzer]}
+  metric_approval:            {A: [owner], R: [steward, begleitung], C: [nutzer], I: [sponsor]}
+  source_inclusion:           {A: [owner], R: [it], C: [dsb, steward], I: [begleitung]}
+  retention_discard_approval: {A: [owner], R: [steward], C: [dsb], I: [it]}
+  sot_conflict_resolution:    {A: [owner], R: [steward], C: [nutzer], I: [begleitung]}
+  dpia_decision:              {A: [dsb], R: [dsb], C: [owner, it], I: [sponsor]}
+  go_live_approval:           {A: [sponsor], R: [owner], C: [dsb, it], I: [nutzer]}
+
+# DSGVO- und KI-Verordnungs-Prüfung. Die Organisation entscheidet, das Kit hält es nur fest.
+compliance:
+  purpose_of_processing: <FILL Zweck der Verarbeitung (Art. 5 Abs. 1 lit. b DSGVO)>
+  personal_data_categories: none        # "none" oder eine Liste, z. B. [Kontaktdaten, Mitgliedsdaten]
+  special_categories_expected: false    # Daten nach Art. 9 DSGVO (Gesundheit, Religion, ...)
+  dpia_screening:                       # Schwellwertanalyse zur Datenschutz-Folgenabschätzung
+    result: pending                     # required | not_required | pending (pending blockiert die Freigabe)
+    reason: <FILL Begründung mit mindestens 20 Zeichen>
+    decided_by: dsb
+  ai_act:
+    classification: pending             # minimal | limited | high | prohibited | pending
+    reason: <FILL Begründung mit mindestens 20 Zeichen>
+  ai_literacy_briefing:                 # KI-Kompetenz nach Art. 4 KI-VO, für die Nutzer
+    status: planned                     # done (erledigt) | planned (geplant)
+    date: "2026-01-15"
+
+cadence:
+  kickoff: "2026-01-12"
+  working_session_interval_days: 7
+  steering: {interval_days: 14, attendees: [sponsor, dsb, owner]}
+  phase_gate_review: {after_each_step: true}
+  pilot_close: "2026-06-30"
+  post_pilot_review: {interval_days: 90, owner: owner}   # kein einmaliges Aufräumen
+
+# Datenumfang. Kategorie-IDs: kb-and-sops, customer-records, policies-and-contracts,
+# financial-ops-metrics, support-history (oder eigene unter category_extensions).
+data_scope:
+  sources:
+    - id: <FILL Quellen-ID>
+      connector: sharepoint             # sharepoint | sql | fileshare | csv-import
+      locator: <FILL URL, Pfad oder Verbindungsname>
+      categories: [kb-and-sops]
+  category_extensions: []
+  categories:
+    - {id: kb-and-sops, approver: owner, reviewers: [steward, nutzer]}

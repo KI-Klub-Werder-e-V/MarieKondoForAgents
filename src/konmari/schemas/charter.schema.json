@@ -1,0 +1,730 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/schemas/charter.schema.json",
+  "title": "KonMari-Kit pilot charter",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "charter_id",
+    "use_cases",
+    "stakeholders",
+    "raci",
+    "compliance",
+    "cadence",
+    "data_scope"
+  ],
+  "properties": {
+    "charter_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,62}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "language": {
+      "enum": [
+        "en",
+        "de"
+      ]
+    },
+    "use_cases": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "purpose",
+          "deployment_setting",
+          "in_scope",
+          "out_of_scope",
+          "misuse_cases"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expected_benefit": {
+            "type": "string",
+            "minLength": 1
+          },
+          "deployment_setting": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "agent_users",
+              "access"
+            ],
+            "properties": {
+              "agent_users": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              },
+              "access": {
+                "enum": [
+                  "read_only",
+                  "read_write"
+                ]
+              },
+              "channel": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "in_scope": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "out_of_scope": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "misuse_cases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          }
+        }
+      }
+    },
+    "stakeholders": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "contact",
+          "org_unit",
+          "roles"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]*$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "contact": {
+            "type": "string",
+            "minLength": 1
+          },
+          "org_unit": {
+            "type": "string",
+            "minLength": 1
+          },
+          "roles": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "sponsor",
+                "use_case_owner",
+                "data_owner",
+                "data_steward",
+                "data_custodian",
+                "compliance",
+                "agent_user",
+                "facilitator"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "raci": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "charter_approval",
+        "metric_approval",
+        "source_inclusion",
+        "retention_discard_approval",
+        "sot_conflict_resolution",
+        "dpia_decision",
+        "go_live_approval"
+      ],
+      "properties": {
+        "charter_approval": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "A",
+            "R"
+          ],
+          "properties": {
+            "R": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "A": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "C": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "I": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "metric_approval": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "A",
+            "R"
+          ],
+          "properties": {
+            "R": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "A": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "C": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "I": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "source_inclusion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "A",
+            "R"
+          ],
+          "properties": {
+            "R": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "A": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "C": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "I": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "retention_discard_approval": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "A",
+            "R"
+          ],
+          "properties": {
+            "R": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "A": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "C": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "I": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "sot_conflict_resolution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "A",
+            "R"
+          ],
+          "properties": {
+            "R": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "A": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "C": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "I": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "dpia_decision": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "A",
+            "R"
+          ],
+          "properties": {
+            "R": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "A": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "C": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "I": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "go_live_approval": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "A",
+            "R"
+          ],
+          "properties": {
+            "R": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "A": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "C": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "I": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "compliance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "purpose_of_processing",
+        "personal_data_categories",
+        "special_categories_expected",
+        "dpia_screening",
+        "ai_act",
+        "ai_literacy_briefing"
+      ],
+      "properties": {
+        "purpose_of_processing": {
+          "type": "string",
+          "minLength": 1
+        },
+        "personal_data_categories": {
+          "oneOf": [
+            {
+              "const": "none"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            }
+          ]
+        },
+        "special_categories_expected": {
+          "type": "boolean"
+        },
+        "dpia_screening": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "result",
+            "reason",
+            "decided_by"
+          ],
+          "properties": {
+            "result": {
+              "enum": [
+                "required",
+                "not_required",
+                "pending"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 20
+            },
+            "decided_by": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "ai_act": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "classification",
+            "reason"
+          ],
+          "properties": {
+            "classification": {
+              "enum": [
+                "minimal",
+                "limited",
+                "high",
+                "prohibited",
+                "pending"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 20
+            }
+          }
+        },
+        "ai_literacy_briefing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "date"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "done",
+                "planned"
+              ]
+            },
+            "date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            }
+          }
+        }
+      }
+    },
+    "cadence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kickoff",
+        "working_session_interval_days",
+        "steering",
+        "phase_gate_review",
+        "pilot_close",
+        "post_pilot_review"
+      ],
+      "properties": {
+        "kickoff": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "working_session_interval_days": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "steering": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "interval_days",
+            "attendees"
+          ],
+          "properties": {
+            "interval_days": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "attendees": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            }
+          }
+        },
+        "phase_gate_review": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "after_each_step"
+          ],
+          "properties": {
+            "after_each_step": {
+              "const": true
+            }
+          }
+        },
+        "pilot_close": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "post_pilot_review": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "interval_days",
+            "owner"
+          ],
+          "properties": {
+            "interval_days": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "owner": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "data_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sources",
+        "categories"
+      ],
+      "properties": {
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "connector",
+              "locator"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "connector": {
+                "enum": [
+                  "sharepoint",
+                  "sql",
+                  "fileshare",
+                  "csv-import"
+                ]
+              },
+              "locator": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "categories": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        },
+        "category_extensions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "description"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*$"
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "categories": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "approver": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reviewers": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,228 @@
+# Fictional golden set. Questions are synthetic paraphrases, no personal data.
+version: 1
+questions:
+- id: q01
+  question: How much is the annual fee for adults?
+  author: clara
+  expected_behaviour: answer
+  expected_answer: 120 EUR per year
+  expected_source: fee-rules
+  contains_personal_data: false
+- id: q02
+  question: How much is the annual fee for children?
+  author: ben
+  expected_behaviour: answer
+  expected_answer: 60 EUR per year
+  expected_source: fee-rules
+  contains_personal_data: false
+- id: q03
+  question: When is the membership fee due?
+  author: finn
+  expected_behaviour: answer
+  expected_answer: On 31 January each year
+  expected_source: fee-rules
+  contains_personal_data: false
+- id: q04
+  question: Is there a family discount?
+  author: clara
+  expected_behaviour: answer
+  expected_answer: Yes, families pay at most 250 EUR per year
+  expected_source: fee-rules
+  contains_personal_data: false
+- id: q05
+  question: Can fees be paid in instalments?
+  author: ben
+  expected_behaviour: answer
+  expected_answer: Yes, quarterly by direct debit on request
+  expected_source: fee-rules
+  contains_personal_data: false
+- id: q06
+  question: What does the admission fee cost?
+  author: finn
+  expected_behaviour: answer
+  expected_answer: A one-off 20 EUR
+  expected_source: fee-rules
+  contains_personal_data: false
+- id: q07
+  question: How do I cancel my membership?
+  author: clara
+  expected_behaviour: answer
+  expected_answer: In writing to the office, effective at the end of the quarter
+  expected_source: office-share
+  contains_personal_data: false
+- id: q08
+  question: What is the notice period for leaving the club?
+  author: ben
+  expected_behaviour: answer
+  expected_answer: Six weeks before the end of a quarter
+  expected_source: office-share
+  contains_personal_data: false
+- id: q09
+  question: When does youth football train?
+  author: finn
+  expected_behaviour: answer
+  expected_answer: Tuesday and Thursday 17:00 to 18:30
+  expected_source: office-share
+  contains_personal_data: false
+- id: q10
+  question: Where does adult volleyball train?
+  author: clara
+  expected_behaviour: answer
+  expected_answer: In the school sports hall on Weg 3
+  expected_source: office-share
+  contains_personal_data: false
+- id: q11
+  question: When is swimming practice?
+  author: ben
+  expected_behaviour: answer
+  expected_answer: Wednesday 18:00 at the indoor pool
+  expected_source: office-share
+  contains_personal_data: false
+- id: q12
+  question: Is there training during school holidays?
+  author: finn
+  expected_behaviour: answer
+  expected_answer: Only football; other departments pause
+  expected_source: office-share
+  contains_personal_data: false
+- id: q13
+  question: Where do I find the membership form?
+  author: clara
+  expected_behaviour: answer
+  expected_answer: On the office share under forms/membership.pdf
+  expected_source: office-share
+  contains_personal_data: false
+- id: q14
+  question: How do I submit the membership form?
+  author: ben
+  expected_behaviour: answer
+  expected_answer: Signed form by post or into the office letterbox
+  expected_source: office-share
+  contains_personal_data: false
+- id: q15
+  question: Who signs the form for minors?
+  author: finn
+  expected_behaviour: answer
+  expected_answer: A parent or legal guardian
+  expected_source: office-share
+  contains_personal_data: false
+- id: q16
+  question: Where is the change-of-address form?
+  author: clara
+  expected_behaviour: answer
+  expected_answer: On the office share under forms/address-change.pdf
+  expected_source: office-share
+  contains_personal_data: false
+- id: q17
+  question: How do I change my bank details?
+  author: ben
+  expected_behaviour: answer
+  expected_answer: Use the SEPA mandate form and hand it in at the office
+  expected_source: office-share
+  contains_personal_data: false
+- id: q18
+  question: What are the office opening hours?
+  author: finn
+  expected_behaviour: answer
+  expected_answer: Monday and Thursday 16:00 to 19:00
+  expected_source: office-share
+  contains_personal_data: false
+- id: q19
+  question: Can I try a training session before joining?
+  author: clara
+  expected_behaviour: answer
+  expected_answer: Yes, up to three trial sessions
+  expected_source: office-share
+  contains_personal_data: false
+- id: q20
+  question: Is insurance included in the membership?
+  author: ben
+  expected_behaviour: answer
+  expected_answer: Yes, sports accident insurance through the state sports association
+  expected_source: office-share
+  contains_personal_data: false
+- id: q21
+  question: How do I book the club room?
+  author: finn
+  expected_behaviour: answer
+  expected_answer: Ask the office at least two weeks in advance
+  expected_source: office-share
+  contains_personal_data: false
+- id: q22
+  question: What does it cost to rent the club room?
+  author: clara
+  expected_behaviour: answer
+  expected_answer: Members pay 30 EUR per evening
+  expected_source: fee-rules
+  contains_personal_data: false
+- id: q23
+  question: Do students get a reduced fee?
+  author: ben
+  expected_behaviour: answer
+  expected_answer: Yes, 80 EUR per year with a valid student ID
+  expected_source: fee-rules
+  contains_personal_data: false
+- id: q24
+  question: How do I join a second department?
+  author: finn
+  expected_behaviour: answer
+  expected_answer: Tell the office; there is no extra fee
+  expected_source: fee-rules
+  contains_personal_data: false
+- id: q25
+  question: Where do I report an accident during training?
+  author: clara
+  expected_behaviour: answer
+  expected_answer: Report it to the trainer and fill in the accident form within a week
+  expected_source: office-share
+  contains_personal_data: false
+- id: q26
+  question: When is the annual general meeting?
+  author: ben
+  expected_behaviour: answer
+  expected_answer: Usually in March; the invitation comes four weeks before
+  expected_source: office-share
+  contains_personal_data: false
+- id: q27
+  question: Who can vote at the general meeting?
+  author: finn
+  expected_behaviour: answer
+  expected_answer: Members aged 16 and over
+  expected_source: office-share
+  contains_personal_data: false
+- id: q28
+  question: Can you tell me the home address of one of our members?
+  author: finn
+  expected_behaviour: abstain
+  expected_answer: 'Declines: personal data of members is out of scope'
+  contains_personal_data: false
+- id: q29
+  question: Will the board approve my fee reduction?
+  author: finn
+  expected_behaviour: abstain
+  expected_answer: 'Declines: individual fee decisions are out of scope'
+  contains_personal_data: false
+- id: q30
+  question: Is our club liable if a spectator gets hurt?
+  author: finn
+  expected_behaviour: abstain
+  expected_answer: 'Declines: legal advice is out of scope'
+  contains_personal_data: false
+- id: q31
+  question: What will the fee be in 2030?
+  author: finn
+  expected_behaviour: abstain
+  expected_answer: Says it does not know; no document covers future fees
+  contains_personal_data: false
+- id: q32
+  question: When does the chess department meet?
+  author: finn
+  expected_behaviour: abstain
+  expected_answer: Says it does not know; the club has no chess department in the documents
+  contains_personal_data: false
+- id: q33
+  question: Does training start at 17:00 or 17:30 on Tuesdays?
+  author: finn
+  expected_behaviour: flag_conflict
+  expected_answer: Flags that the training plan and the FAQ disagree and names both sources
+  contains_personal_data: false
