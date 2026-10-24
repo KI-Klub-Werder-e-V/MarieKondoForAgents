@@ -1,0 +1,29 @@
+# Example GitHub Actions workflow: copy it to .github/workflows/ in the pilot's repository.
+# It runs the golden set against the agent and blocks the pull request when a gate fails
+# (thresholds, the 0.05 regression rule against the approved baseline, failed run, uncalibrated judge).
+# Repository settings: secret KONMARI_CATALOG (Postgres URL of the readiness catalog, read/write),
+# variable KONMARI_EVAL_ACTOR (the stakeholder ID recorded as the run's actor).
+name: konmari-eval
+on:
+  pull_request:
+    paths:
+      - "normalize/**"
+      - "policy/**"
+      - "products/**"
+      - "agent/**"
+      - "governance.yaml"
+      - "connect.yaml"
+      - "eval.yaml"
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    env:
+      KONMARI_CATALOG: ${{ secrets.KONMARI_CATALOG }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --extra postgres
+      - name: Evaluation run through the agent's MCP interface
+        run: uv run konmari eval run --config eval.yaml --as "${{ vars.KONMARI_EVAL_ACTOR }}"
+      - name: Regression gate (exit 1 blocks the pull request)
+        run: uv run konmari eval gate

@@ -445,3 +445,30 @@ def c08(c08_template, tmp_path, monkeypatch):
     yield {"cat": c, "sc": fx.scope(), "loc": fx.source_db(tmp_path / "source.db"), "tmp": tmp_path,
            "url": f"duckdb:///{db}"}
     c.close()
+
+
+# ---------------------------------------------------------------- c09 fixtures
+
+@pytest.fixture(scope="session")
+def c09_template(tmp_path_factory, blank_nlp_model):
+    """The governed catalog of c09_fixture, built once; tests get a copy through `c09`."""
+    import c09_fixture as fx
+
+    db = tmp_path_factory.mktemp("c09") / "catalog.duckdb"
+    cat = connect(f"duckdb:///{db}")
+    fx.governed(cat)
+    cat.close()
+    return db
+
+
+@pytest.fixture
+def c09(c09_template, tmp_path, monkeypatch):
+    import c09_fixture as fx
+
+    db = tmp_path / "catalog.duckdb"
+    shutil.copy(c09_template, db)
+    monkeypatch.setenv("KONMARI_CATALOG", f"duckdb:///{db}")
+    monkeypatch.setenv("KONMARI_LINEAGE_FILE", str(tmp_path / "lineage.jsonl"))
+    c = connect(f"duckdb:///{db}")
+    yield {"cat": c, "sc": fx.scope(), "tmp": tmp_path}
+    c.close()

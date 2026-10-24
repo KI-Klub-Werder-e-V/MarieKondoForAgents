@@ -1,0 +1,12 @@
+DROP TABLE drift_result;
+DROP TABLE incident;
+DROP TABLE check_result;
+DROP TABLE monitored_asset;
+DROP TABLE category_focus;
+DROP TABLE baseline;
+DROP TABLE judge_calibration;
+DROP TABLE citation_check;
+DROP TABLE eval_result;
+DROP TABLE eval_run;
+DROP TABLE golden_set;
+DROP TABLE golden_item;

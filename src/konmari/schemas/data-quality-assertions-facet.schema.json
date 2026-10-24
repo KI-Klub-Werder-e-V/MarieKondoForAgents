@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openlineage.io/spec/facets/1-0-1/DataQualityAssertionsDatasetFacet.json",
+  "$comment": "OpenLineage DataQualityAssertionsDatasetFacet 1-0-1 with the InputDatasetFacet/BaseFacet fields inlined (no remote $ref).",
+  "type": "object",
+  "required": ["_producer", "_schemaURL", "assertions"],
+  "properties": {
+    "_producer": {"type": "string", "format": "uri"},
+    "_schemaURL": {"type": "string", "format": "uri"},
+    "_deleted": {"type": "boolean"},
+    "assertions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["assertion", "success"],
+        "properties": {
+          "assertion": {"type": "string", "description": "Type of expectation test that dataset is subjected to"},
+          "success": {"type": "boolean"},
+          "column": {"type": "string", "description": "Column that expectation is testing; empty = whole dataset"}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

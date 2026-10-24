@@ -2071,6 +2071,9 @@ def build_parser() -> argparse.ArgumentParser:
     from konmari.connect import cli as connect_cli
 
     connect_cli.register(groups, ccmd)
+    from konmari.evaluate import cli as eval_cli
+
+    eval_cli.register(groups, ccmd)
     return p
 
 

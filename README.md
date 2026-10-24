@@ -125,7 +125,19 @@ konmari serve --check-pins                          # neue Werkzeuge prüfen, da
 konmari serve --stdio                               # MCP-Server für einen lokalen Agenten (oder --http mit OAuth)
 ```
 
-Für die Personendaten-Hinweise einmal die Sprachmodelle laden: `uv run python -m spacy download de_core_news_lg` (Schritt 7 zusätzlich `en_core_web_lg`). SMB-Ablagen: `uv sync --extra smb`. Semantische Dubletten: `uv sync --extra semantic`, S3-Archiv: `uv sync --extra s3`, Docling-Parser: `uv sync --extra docling`.
+Schritt 9, Prüfen und Beobachten (Anleitung: [docs/evaluate-guide.de.md](docs/evaluate-guide.de.md), CI-Beispiel: `examples/ci/konmari-eval.yml`):
+
+```
+konmari eval items import fragen.yaml --as <id>     # Golden-Set-Fragen (Protokoll-Fragen werden maskiert), dann items approve <id> --as <id>
+konmari eval set activate --as <id>                 # >= 50 Fragen, >= 20 % ohne Antwort, <= 50 % synthetisch
+konmari eval run --as <id>                          # über die MCP-Schnittstelle des Agenten (eval.yaml), auch: report
+konmari eval gate                                   # Grenzwerte und Vergleichsbasis (Exit 1 = blockiert)
+konmari eval baseline approve <lauf> --as <id>      # oder baseline revert; auch: calibrate, next-category, items retention
+konmari monitor run --as <id>                       # Aktualität, Menge, Metadaten, Dubletten, Schema (auch --dry-run, schedule)
+konmari monitor incident acknowledge <id> --reason "..." --as <id>   # oder resolve, accept-risk; auch: incidents, threshold, drift, import
+```
+
+Für die Personendaten-Hinweise einmal die Sprachmodelle laden: `uv run python -m spacy download de_core_news_lg` (Schritt 7 zusätzlich `en_core_web_lg`). SMB-Ablagen: `uv sync --extra smb`. Ragas als Bewertungsmodell: `uv sync --extra ragas`. Semantische Dubletten: `uv sync --extra semantic`, S3-Archiv: `uv sync --extra s3`, Docling-Parser: `uv sync --extra docling`.
 
 Der Katalog liegt standardmäßig in `.konmari/catalog.duckdb`. Für Postgres 16: `uv sync --extra postgres` und `KONMARI_CATALOG=postgresql://...` oder `--catalog`. Schnittstelle für spätere Changes: [docs/gate-contract.md](docs/gate-contract.md), [docs/enrich-contract.md](docs/enrich-contract.md), [docs/governance-contract.md](docs/governance-contract.md), [docs/connect-contract.md](docs/connect-contract.md). Tests: `uv run pytest -q`.
 

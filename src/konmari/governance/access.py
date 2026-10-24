@@ -216,6 +216,21 @@ def _score(query: str, text: str) -> int:
     return len(words & set(re.findall(r"\w+", text.lower())))
 
 
+def _freshness(cat: Catalog, hits: list[dict]) -> None:
+    """c09 freshness monitoring: chunks of a monitored asset carry its freshness status and last change, so the
+    agent can flag or abstain on answers drawn from stale data."""
+    if not hits:
+        return
+    ids = sorted({h["item_id"] for h in hits})
+    rows = cat.query("SELECT i.item_id, m.freshness_status, m.last_change FROM corpus_item i JOIN monitored_asset m"
+                     f" ON m.asset_id = i.asset_uri WHERE i.item_id IN ({', '.join('?' * len(ids))})", tuple(ids))
+    by = {r["item_id"]: r for r in rows}
+    for h in hits:
+        if m := by.get(h["item_id"]):
+            h["freshness_status"] = m["freshness_status"] or "unknown"
+            h["last_change"] = m["last_change"] and m["last_change"].isoformat() + "Z"
+
+
 def retrieve(cat: Catalog, ctx: Context, query: str, k: int = 5, tool: str = "search", prefilter=None) -> list[dict]:
     """Best matching chunks the context may read. Sources with an overdue ACL sync are blocked.
     shortcut: lexical overlap ranking; c08/c09 plug in the embedding search on the same filtered rows."""
@@ -224,6 +239,7 @@ def retrieve(cat: Catalog, ctx: Context, query: str, k: int = 5, tool: str = "se
         ids = prefilter(ctx) if prefilter else None
         rows = sorted(_rows(cat, ctx, cats, ids), key=lambda r: (-_score(query, r["content"]), r["chunk_id"]))
         hits = [r for r in rows if _score(query, r["content"]) > 0][:k]
+        _freshness(cat, hits)
         return hits, [r["chunk_id"] for r in hits]
     return tool_call(cat, ctx, tool, "read", run)
 

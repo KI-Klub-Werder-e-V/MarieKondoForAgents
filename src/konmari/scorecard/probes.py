@@ -30,6 +30,8 @@ KINDS = {
     "superseded": {"superseded_by": "ref"},
     "relevance": {"relevant": bool, "marked_by": str},
     "freshness_alert": {"status": str},
+    "agent_eval": {"pass_rate": _NUM, "faithfulness": _NUM, "citation_precision": _NUM, "citation_recall": _NUM,
+                   "citation_check": _NUM, "abstention_rate": _NUM, "status": str, "items": int},
     "soda_check": {"check_type": str, "outcome": str, "check_hash": str},
 }
 BROAD = {"everyone": "everyone", "everyone except external users": "eeeu", "eeeu": "eeeu",
@@ -189,7 +191,7 @@ class AuthoritativeCurrent:
             ev |= {"age_days": round(age, 1), "stale_ratio": ratio}
             level = 0 if ratio > ctx.cfg["stale_multiple"] else 1 if ratio > 1 else 2
         alert = ctx.latest(uri, "freshness_alert")
-        if alert and (lm is None or alert["captured_at"] > lm):
+        if alert and alert["payload"]["status"] in ("warn", "error") and (lm is None or alert["captured_at"] > lm):
             ev["freshness_alert"] = alert["payload"]["status"]
             level = min(level, 0 if alert["payload"]["status"] == "error" else 1)
         soda = _soda(ctx, uri, "freshness")
