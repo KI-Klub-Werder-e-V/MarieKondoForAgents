@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/blob/v0.1.0/src/konmari/schemas/chunk-metadata-facet.schema.json",
+  "title": "konmari_chunkMetadata dataset facet 1-0-0",
+  "description": "Custom OpenLineage dataset facet: the KonMari metadata envelope summary of one enriched item or table.",
+  "type": "object",
+  "required": ["_producer", "_schemaURL", "subject_kind", "subjects", "content_type", "sensitivity", "authority",
+               "freshness_class", "status_counts", "acl_stale", "glossary_terms"],
+  "properties": {
+    "_producer": {"type": "string", "format": "uri"},
+    "_schemaURL": {"type": "string", "format": "uri"},
+    "subject_kind": {"enum": ["chunk", "table"]},
+    "subjects": {"type": "integer", "minimum": 0},
+    "content_type": {"type": ["string", "null"]},
+    "sensitivity": {"type": ["string", "null"]},
+    "authority": {"enum": ["primary", "secondary", null]},
+    "freshness_class": {"enum": ["live", "daily", "weekly", "monthly", "static", null]},
+    "status_counts": {"type": "object", "additionalProperties": {"type": "integer"}},
+    "acl_stale": {"type": "integer", "minimum": 0},
+    "glossary_terms": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

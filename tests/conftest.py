@@ -371,3 +371,18 @@ def sot_cli(engagement, sot, cli):
     code, _, err = cli("charter", "approve", "--as", "anna")
     assert code == 0, err
     return sot
+
+
+# ---------------------------------------------------------------- c06 fixtures
+
+@pytest.fixture
+def c06(dp):
+    """The c04 `dp` pilot plus the c06 fixture corpus registered as kept items, ready for chunking."""
+    import c06_fixture as fx
+    from konmari.charter.store import scope
+
+    files = fx.write(dp["tmp"] / "c06")
+    manifest = fx.write_manifest(dp["tmp"] / "c06.jsonl", fx.entries(files))
+    fx.register(dp["cat"], manifest)
+    fx.ready_for_enrich(dp["cat"])
+    return {**dp, "files": files, "manifest": manifest, "sc": scope(fx.CHARTER, dp["cat"])}

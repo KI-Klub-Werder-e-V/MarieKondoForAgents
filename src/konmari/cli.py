@@ -14,6 +14,10 @@ from konmari.catalog import audit_change, connect
 from konmari.charter import store as cs
 from konmari.charter.gate import gate
 from konmari.charter.validation import STEPS, roles_by_id, validate_charter
+from konmari.chunking import store as cst
+from konmari.enrich import store as est
+from konmari.enrich.providers import OpenAICompatible
+from konmari.glossary import store as gls
 from konmari.categories import store as cats
 from konmari.catalog import verify_chain
 from konmari.discard import calibrate as dcal
@@ -1062,6 +1066,156 @@ def conflicts_export(a, cat_url):
     return 0
 
 
+# ---------------------------------------------------------------- structure and enrich (c06)
+
+def _enrich_scope(a, cat):
+    """c06 steps pass the readiness gate first and act as a named stakeholder."""
+    res = gate("enrich", a.charter, cat, getattr(a, "as_", None))
+    if not res.passed:
+        raise Refused(res.unmet)
+    return _scope(a, cat)
+
+
+def chunk_run(a, cat_url):
+    cat = connect(cat_url)
+    rep = cst.run(cat, _enrich_scope(a, cat), a.as_ or "konmari-chunk", a.dry_run)
+    if a.json:
+        _json(rep)
+    else:
+        print(cst.render_report(rep), end="")
+    return 0
+
+
+def chunk_profile(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    if a.op == "show":
+        _json({c: cst.profile(cat, sc.charter_id, c) for c in ([a.category] if a.category else sc.categories)})
+        return 0
+    changes = {k: v for k, v in {"max_tokens": a.max_tokens, "min_tokens": a.min_tokens,
+                                 "overlap_fallback": a.overlap_fallback, "model_max_tokens": a.model_max_tokens,
+                                 "flag_tokens": a.flag_tokens, "tokenizer": a.tokenizer, "parser": a.parser,
+                                 "llm_context": a.llm_context}.items() if v is not None}
+    if a.approved_processor:
+        changes["approved_processors"] = a.approved_processor
+    if not changes:
+        return _fail("nothing to change; give e.g. --max-tokens 600")
+    _json(cst.set_profile(cat, sc, a.category, changes, a.as_, a.reason))
+    return 0
+
+
+def chunk_rollback(a, cat_url):
+    cat = connect(cat_url)
+    rep = cst.rollback(cat, _scope(a, cat), a.run, a.as_, a.reason)
+    print(f"run {a.run} rolled back; previous chunk sets active again for {len(rep['items'])} item(s)")
+    return 0
+
+
+def _model(a):
+    if not getattr(a, "llm_url", None):
+        return None
+    return OpenAICompatible(a.llm_url, a.llm_model, a.processor)
+
+
+def enrich_run(a, cat_url):
+    cat = connect(cat_url)
+    rep = est.run(cat, _enrich_scope(a, cat), a.as_ or "konmari-enrich", model=_model(a),
+                  emit_lineage=not a.no_lineage)
+    rep.pop("lineage_event", None)
+    if a.json:
+        _json(rep)
+    else:
+        print(est.render_report(rep), end="")
+    return 0
+
+
+def enrich_override(a, cat_url):
+    cat = connect(cat_url)
+    o = est.override(cat, _scope(a, cat), a.subject, a.field, a.value, a.as_, a.reason)
+    print(f"{o['subject']} {o['field']}: {o['previous']!r} -> {o['new']!r} (kept by later runs)")
+    return 0
+
+
+def enrich_lineage(a, cat_url):
+    _json(est.lineage(connect(cat_url), a.chunk))
+    return 0
+
+
+def enrich_rollback(a, cat_url):
+    cat = connect(cat_url)
+    rep = est.rollback(cat, _scope(a, cat), a.run, a.as_, a.reason)
+    print(f"run {a.run} rolled back; {rep['restored']} metadata row(s) restored")
+    return 0
+
+
+def enrich_schema(a, cat_url):
+    cat = connect(cat_url)
+    if a.op == "load":
+        changed = est.load_schema(cat, _scope(a, cat), a.file, a.as_)
+        print(f"{len(changed)} column annotation(s) changed")
+        return 0
+    cov = {t: est.schema_coverage(cat, t) for t in est.exposed_tables(cat)}
+    _json(cov)
+    gaps = [f"{t} column {c}: {', '.join(g)}" for t, v in cov.items() for c, g in v["gaps"].items()]
+    return _fail(gaps) if gaps else 0
+
+
+def glossary_cmd(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    op, actor = a.op, getattr(a, "as_", None)
+    if op == "stewards":
+        print(f"stewards: {', '.join(gls.set_stewards(cat, sc, a.steward, actor)['stewards'])}")
+        return 0
+    if op == "add":
+        t = gls.add(cat, sc, gls.read_term_file(a.file), actor)
+    elif op == "edit":
+        changes = gls.read_term_file(a.file) if a.file else {}
+        if a.definition:
+            changes["definition"] = a.definition
+        t = gls.edit(cat, sc, a.term, changes, actor)
+    elif op == "submit":
+        t = gls.submit(cat, sc, a.term, actor)
+    elif op in ("approve", "reject"):
+        t = gls.decide(cat, sc, a.term, actor, op == "approve", a.comment)
+    elif op == "deprecate":
+        t = gls.deprecate(cat, sc, a.term, actor, a.replaced_by, a.comment)
+    elif op == "revert":
+        t = gls.revert(cat, sc, a.term, a.to, actor, a.reason)
+    elif op == "draft-definition":
+        t = gls.ai_draft(cat, sc, a.term, _model(a), actor, a.approved_processor or [])
+    elif op == "harvest":
+        qs = [q["question"] for q in (load_yaml(Path(a.questions)) or {}).get("questions", [])] \
+            if a.questions and Path(a.questions).exists() else []
+        for c in gls.harvest(cat, sc, actor, qs, a.top, lang=a.lang):
+            print(f"{c['count']:>4} {c['label']} -> draft {c['term_id']} (chunks {c.get('chunks', 0)}, columns "
+                  f"{c.get('columns', 0)}, questions {c.get('questions', 0)})")
+        return 0
+    elif op == "conflict":
+        c = gls.resolve_conflict(cat, sc, a.conflict, actor, a.decision)
+        print(f"{c['conflict_id']} resolved")
+        return 0
+    elif op == "report":
+        _json(gls.report(cat, sc.charter_id))
+        return 0
+    elif op == "export":
+        text = gls.export_skos(cat, sc.charter_id) if a.format == "skos" else \
+            json.dumps(gls.export_json(cat, sc.charter_id), indent=2, ensure_ascii=False)
+        if a.output:
+            Path(a.output).write_text(text, encoding="utf-8")
+            print(f"wrote {a.output}")
+        else:
+            print(text)
+        return 0
+    else:  # show
+        t = gls.term(cat, a.term)
+        _json({**t, "status": gls.status(t), "links": gls.links(cat, a.term)})
+        return 0
+    print(f"{t['term_id']}: {gls.status(t)} (latest version {t['latest']['version']} {t['latest']['status']}, "
+          f"exposed version {t['exposed_version'] or '-'})")
+    return 0
+
+
 # ---------------------------------------------------------------- parser
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1513,6 +1667,96 @@ def build_parser() -> argparse.ArgumentParser:
     q = cos.add_parser("export-tickets", help="CSV of write-back tickets for the source owners")
     q.add_argument("-o", "--output", default="write-back-tickets.csv")
     q.set_defaults(fn=conflicts_export)
+
+    ck_ = groups.add_parser("chunk", help="structure-aware chunking of kept, normalized pilot documents")
+    cks = ck_.add_subparsers(dest="cmd", required=True)
+    q = ccmd(cks, "run", chunk_run, "chunk eligible items and print the chunking report", actor="optional")
+    q.add_argument("--dry-run", action="store_true", help="compute and report, write nothing")
+    q.add_argument("--json", action="store_true")
+    prof = cks.add_parser("profile", help="chunking profiles per category").add_subparsers(dest="op", required=True)
+    q = ccmd(prof, "show", chunk_profile, "effective profile per category", actor=None)
+    q.add_argument("category", nargs="?")
+    q = ccmd(prof, "set", chunk_profile, "override profile values for one category (audited)")
+    q.add_argument("category")
+    for opt, typ in (("--max-tokens", int), ("--min-tokens", int), ("--overlap-fallback", float),
+                     ("--model-max-tokens", int), ("--flag-tokens", int), ("--tokenizer", str),
+                     ("--parser", str)):
+        q.add_argument(opt, type=typ)
+    q.add_argument("--llm-context", type=lambda v: v.lower() in ("1", "true", "yes", "on"), metavar="on|off")
+    q.add_argument("--approved-processor", action="append", help="processor allowed to receive content (repeatable)")
+    q.add_argument("--reason", required=True)
+    q = ccmd(cks, "rollback", chunk_rollback, "make the previous chunk sets of a run's items active again")
+    q.add_argument("run")
+    q.add_argument("--reason")
+
+    en = groups.add_parser("enrich", help="metadata envelope, completeness gate, schemas, lineage")
+    ens = en.add_subparsers(dest="cmd", required=True)
+    q = ccmd(ens, "run", enrich_run, "enrich active chunks and agent-exposed tables; print the report",
+             actor="optional")
+    q.add_argument("--llm-url", help="opt-in LLM context: OpenAI-compatible server (self-hosted by default)")
+    q.add_argument("--llm-model")
+    q.add_argument("--processor", help="name of the external processor running --llm-url (must be approved)")
+    q.add_argument("--no-lineage", action="store_true", help="do not emit the OpenLineage run event")
+    q.add_argument("--json", action="store_true")
+    q = ccmd(ens, "override", enrich_override, "set one envelope field of a chunk, item or table (audited)")
+    q.add_argument("subject", help="chunk ID, item ID or table asset URI")
+    q.add_argument("--field", required=True)
+    q.add_argument("--value", required=True)
+    q.add_argument("--reason", required=True)
+    q = ens.add_parser("lineage", help="source, normalization, chunking and enrichment steps of one chunk")
+    q.add_argument("chunk")
+    q.set_defaults(fn=enrich_lineage)
+    q = ccmd(ens, "rollback", enrich_rollback, "restore the metadata values a run changed")
+    q.add_argument("run")
+    q.add_argument("--reason")
+    sch = ens.add_parser("schema", help="column annotations of agent-exposed tables").add_subparsers(dest="op",
+                                                                                                  required=True)
+    q = ccmd(sch, "load", enrich_schema, "load table and column descriptions from YAML")
+    q.add_argument("file")
+    ccmd(sch, "report", enrich_schema, "schema coverage (exit 1 lists undocumented columns)", actor=None)
+
+    gl = groups.add_parser("glossary", help="business glossary: terms, steward approval, links, export")
+    gls_ = gl.add_subparsers(dest="op", required=True)
+    q = ccmd(gls_, "stewards", glossary_cmd, "name the glossary stewards")
+    q.add_argument("--steward", action="append", required=True)
+    q = ccmd(gls_, "add", glossary_cmd, "add a draft term from a YAML file")
+    q.add_argument("--file", required=True)
+    q = ccmd(gls_, "edit", glossary_cmd, "edit a term (approved terms get a new version in review)")
+    q.add_argument("term")
+    q.add_argument("--file")
+    q.add_argument("--definition")
+    for name, help in (("submit", "send a draft to review"), ("approve", "approve (steward, not an author)"),
+                       ("reject", "reject (steward, not an author)")):
+        q = ccmd(gls_, name, glossary_cmd, help)
+        q.add_argument("term")
+        q.add_argument("--comment", required=name == "reject")
+    q = ccmd(gls_, "deprecate", glossary_cmd, "deprecate an approved term")
+    q.add_argument("term")
+    q.add_argument("--replaced-by")
+    q.add_argument("--comment", required=True)
+    q = ccmd(gls_, "revert", glossary_cmd, "expose an earlier approved version again")
+    q.add_argument("term")
+    q.add_argument("--to", type=int, required=True)
+    q.add_argument("--reason")
+    q = ccmd(gls_, "harvest", glossary_cmd, "propose draft terms from chunks, exposed columns and pilot questions")
+    q.add_argument("--questions", default="golden-set.yaml")
+    q.add_argument("--top", type=int, default=20)
+    q.add_argument("--lang", default="de", choices=["de", "en"])
+    q = ccmd(gls_, "draft-definition", glossary_cmd, "let a self-hosted or approved model draft a definition")
+    q.add_argument("term")
+    q.add_argument("--llm-url", required=True)
+    q.add_argument("--llm-model", required=True)
+    q.add_argument("--processor")
+    q.add_argument("--approved-processor", action="append")
+    q = ccmd(gls_, "conflict", glossary_cmd, "resolve a glossary conflict (steward decision)")
+    q.add_argument("conflict")
+    q.add_argument("--decision", required=True)
+    ccmd(gls_, "report", glossary_cmd, "coverage, terms per status and open conflicts", actor=None)
+    q = ccmd(gls_, "export", glossary_cmd, "approved and deprecated terms as SKOS (Turtle) or JSON", actor=None)
+    q.add_argument("--format", choices=["skos", "json"], default="skos")
+    q.add_argument("-o", "--output")
+    q = ccmd(gls_, "show", glossary_cmd, "one term with versions, status and links", actor=None)
+    q.add_argument("term")
     return p
 
 

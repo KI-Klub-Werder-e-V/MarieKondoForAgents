@@ -1,0 +1,17 @@
+DROP VIEW approved_glossary_term;
+DROP VIEW metadata_completeness;
+DROP VIEW chunk_acl;
+DROP VIEW agent_chunk;
+DROP TABLE glossary_metric;
+DROP TABLE glossary_link;
+DROP TABLE glossary_term_version;
+DROP TABLE glossary_term;
+DROP TABLE glossary;
+DROP TABLE column_annotation;
+DROP TABLE chunk_metadata_history;
+DROP TABLE chunk_metadata;
+DROP TABLE enrich_run;
+DROP TABLE chunk;
+DROP TABLE chunk_set;
+DROP TABLE chunk_run;
+DROP TABLE chunking_profile;

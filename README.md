@@ -87,9 +87,21 @@ konmari conflicts list --as <id>                    # dann conflicts resolve <id
 konmari conflicts report --overdue                  # überfällige Konflikte (auch: accept, revert, export-tickets)
 ```
 
-Für die Personendaten-Hinweise einmal das Sprachmodell laden: `uv run python -m spacy download de_core_news_lg`. SMB-Ablagen: `uv sync --extra smb`. Semantische Dubletten: `uv sync --extra semantic`, S3-Archiv: `uv sync --extra s3`.
+Schritt 6, Strukturieren und Anreichern (Anleitung: [docs/enrich-guide.de.md](docs/enrich-guide.de.md)):
 
-Der Katalog liegt standardmäßig in `.konmari/catalog.duckdb`. Für Postgres 16: `uv sync --extra postgres` und `KONMARI_CATALOG=postgresql://...` oder `--catalog`. Schnittstelle für spätere Changes: [docs/gate-contract.md](docs/gate-contract.md). Tests: `uv run pytest -q`.
+```
+konmari chunk run --dry-run --as <id>               # Chunks und Bericht, schreibt nichts (dann ohne --dry-run)
+konmari chunk profile set <kategorie> --max-tokens 600 --reason "..." --as <id>   # auch: profile show, rollback <lauf>
+konmari enrich schema load schema.yaml --as <id>    # für Agenten sichtbare Tabellen mit Spaltenbeschreibungen
+konmari enrich run --as <id>                        # Metadaten-Umschlag, Vollständigkeit, ACL-Tags, Lineage
+konmari enrich override <element> --field owner --value <id> --reason "..." --as <id>   # auch: lineage, rollback
+konmari glossary stewards --steward <id> --as <id>  # dann glossary add|submit|approve|harvest|revert|deprecate
+konmari glossary export --format skos -o glossar.ttl   # nur freigegebene Begriffe (auch: --format json, report)
+```
+
+Für die Personendaten-Hinweise einmal das Sprachmodell laden: `uv run python -m spacy download de_core_news_lg`. SMB-Ablagen: `uv sync --extra smb`. Semantische Dubletten: `uv sync --extra semantic`, S3-Archiv: `uv sync --extra s3`, Docling-Parser: `uv sync --extra docling`.
+
+Der Katalog liegt standardmäßig in `.konmari/catalog.duckdb`. Für Postgres 16: `uv sync --extra postgres` und `KONMARI_CATALOG=postgresql://...` oder `--catalog`. Schnittstelle für spätere Changes: [docs/gate-contract.md](docs/gate-contract.md), [docs/enrich-contract.md](docs/enrich-contract.md). Tests: `uv run pytest -q`.
 
 Die Changes werden der Reihe nach umgesetzt, beginnend mit `c01-pilot-charter`:
 
