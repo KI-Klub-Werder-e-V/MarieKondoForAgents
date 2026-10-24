@@ -315,6 +315,7 @@ def sot_pipeline(tmp_path_factory):
     import sot_fixture as fx
     from konmari.inventory.lineage import MemoryTransport
     from konmari.normalize import store as nst
+    from konmari.policy import golden
     from konmari.policy import store as pst
     from konmari.resolve import linkage as erl
 
@@ -332,6 +333,7 @@ def sot_pipeline(tmp_path_factory):
     erl.publish(cat, sc, "customer", "ben", sorted(known))
     pst.load(cat, sc, f["policy"], "ben")
     pst.approve(cat, sc, "customer", 1, "ben")
+    golden.build(cat, sc, "customer", "ben")
     cat.close()
     return {"db": db, "files": f, "norm": norm, "er": er, "events": t.events}
 

@@ -137,7 +137,10 @@ def build(cat: Catalog, sc: Scope | None, entity: str, actor: str, exposed: dict
 
 
 def rebuild_if_ready(cat: Catalog, sc: Scope | None, entity: str, actor: str) -> dict | None:
-    if active_policy(cat, entity) and published(cat, entity):
+    """Recompute golden records that exist already; the first publication goes through `build` with the coverage
+    check (konmari policy build), so an approval or split never publishes an entity whose exposed fields lack rules."""
+    exists = cat.one("SELECT 1 AS x FROM golden_attribute WHERE entity = ? LIMIT 1", (entity,))
+    if exists and active_policy(cat, entity) and published(cat, entity):
         return build(cat, sc, entity, actor)
     return None
 

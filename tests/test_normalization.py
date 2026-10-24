@@ -94,6 +94,11 @@ def test_spec_versions_are_recorded(cat, tmp_path):
     assert nst.load_specs(cat, specs, "clara")["version"] == 2  # unchanged content: no new version
     rows = cat.query("SELECT spec_version FROM normalized_value WHERE run_id = ?", (r1["run_id"],))
     assert rows and all(r["spec_version"] == 1 for r in rows)
+    write_mini(tmp_path / "m", [{"source": "crm", "object": "kontakt", "record_id": "K-1",
+                                 "values": {"geburtstag": "03.04.2025"}}], [CRM_DATE | {"owner": "clara"}])
+    r2 = nst.run(cat, rec, specs, "clara", MemoryTransport())
+    rows = cat.query("SELECT spec_version FROM normalized_value WHERE run_id = ?", (r2["run_id"],))
+    assert rows and all(r["spec_version"] == 2 for r in rows)
 
 
 def test_spec_validation_names_the_problem():

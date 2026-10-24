@@ -104,6 +104,8 @@ def _mini_pipeline(cat, tmp_path):
                           "owner": "ben", "rationale": "r"}}}), encoding="utf-8")
     pst.load(cat, sc, pol, "ben")
     pst.approve(cat, sc, "customer", 1, "ben")
+    assert not golden.record(cat, "customer", cat.one("SELECT cluster_id FROM crosswalk LIMIT 1")["cluster_id"])
+    golden.build(cat, sc, "customer", "ben")
     cid = cat.one("SELECT cluster_id FROM crosswalk WHERE active LIMIT 1")["cluster_id"]
     assert golden.serve(cat, "customer", cid, "payment_terms")["value"] == "30 Tage"
     c = cf.entries(cat, "customer")

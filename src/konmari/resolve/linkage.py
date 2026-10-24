@@ -350,8 +350,7 @@ def published(cat: Catalog, entity: str) -> bool:
 def _rebuild(cat: Catalog, sc: Scope | None, entity: str, actor: str) -> None:
     from konmari.policy import golden
 
-    if golden.active_policy(cat, entity):
-        golden.build(cat, sc, entity, actor)
+    golden.rebuild_if_ready(cat, sc, entity, actor)  # an unpublished later run must not fail a split half-way
 
 
 def split(cat: Catalog, sc: Scope | None, entity: str, cid: str, records: list[str], actor: str, reason: str) -> dict:

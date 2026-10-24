@@ -121,9 +121,10 @@ def test_thresholds_and_floors_come_from_success_metrics(cat):
 
 # ---------------------------------------------------------------- 3.4 quality gate
 
-def test_precision_below_floor_blocks_publication(sot, cli):
+def test_precision_below_floor_blocks_publication(sot_cli, cli):
     import sot_fixture as fx
 
+    sot = sot_cli
     cat, sc = sot["cat"], sot["sc"]
     auto = cat.query("SELECT rec_a, rec_b FROM er_pair WHERE origin = 'auto' ORDER BY rec_a, rec_b")
     cat.execute("UPDATE er_pair SET label = NULL")
@@ -133,6 +134,8 @@ def test_precision_below_floor_blocks_publication(sot, cli):
     with pytest.raises(Refused) as e:
         erl.publish(cat, sc, E, "ben", fx.known_duplicates())
     assert "precision 0.95 is below the floor 0.98" in e.value.reasons[0]
+    code, _, err = cli("resolve", "publish", "--entity", E, "--known", sot["files"]["known"], "--as", "ben")
+    assert code == 1 and "below the floor 0.98" in err
     assert not erl.published(cat, E)
 
 
@@ -177,6 +180,16 @@ def test_wrongly_merged_entities_are_split(sot):
     erl.restore(cat, sc, rep["split_id"], "clara", "the owner confirmed one firm after all")
     assert cluster_of(cat, "crm:K-S1")["cluster_id"] == cluster_of(cat, "erp:D-S2")["cluster_id"] == cid
     assert {g["source"] for g in golden.record(cat, E, cid)} >= {"crm", "erp"}
+
+
+def test_split_after_an_unpublished_run_keeps_golden_records(sot):
+    cat, sc = sot["cat"], sot["sc"]
+    erl.run(cat, sc, E, erl.load_config(sot["files"]["resolve"]), "ben")  # new run, not yet published
+    cid = cluster_of(cat, "crm:K-S1")["cluster_id"]
+    before = golden.record(cat, E, cid)
+    erl.split(cat, sc, E, cid, ["erp:D-S2"], "clara", "two sister companies")
+    assert cluster_of(cat, "crm:K-S1")["cluster_id"] != cluster_of(cat, "erp:D-S2")["cluster_id"]
+    assert golden.record(cat, E, cid) == before  # recomputed only after the run is published
 
 
 def test_split_needs_a_proper_subset(sot):
