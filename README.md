@@ -58,7 +58,20 @@ konmari score fix-done <asset> <kriterium> --as <id>  # neu bewerten (auch: scor
 konmari scorecard report --format json              # Assets und Kategorie-Reife (md, csv, json)
 ```
 
-Für die Personendaten-Hinweise einmal das Sprachmodell laden: `uv run python -m spacy download de_core_news_lg`. SMB-Ablagen: `uv sync --extra smb`.
+Schritt 4, Aussortieren (Anleitung: [docs/discard-guide.de.md](docs/discard-guide.de.md)):
+
+```
+konmari discard detect --items items.jsonl --as <id>   # Dubletten, Fassungen, außerhalb des Piloten, sensible Inhalte
+konmari discard calibrate --detector minhash --sample 60 --as <id>   # dann --labels pairs.csv --threshold 0.8
+konmari discard propose --as <id>                   # Vorschläge; ändern nichts
+konmari discard approve <vorschlag> --as <id>       # oder reject, bulk-approve, cancel
+konmari discard execute --as <id>                   # archivieren, ausschließen, zur Maskierung, löschen
+konmari discard restore <element> --as <id>         # auch: history, log verify, check-propagation, report
+konmari retention rule add ... --as <id>            # Fristen je Kategorie (Compliance), dann rule approve
+konmari retention check --as <id>                   # abgelaufene Fristen, auch im Archiv (auch: retention hold)
+```
+
+Für die Personendaten-Hinweise einmal das Sprachmodell laden: `uv run python -m spacy download de_core_news_lg`. SMB-Ablagen: `uv sync --extra smb`. Semantische Dubletten: `uv sync --extra semantic`, S3-Archiv: `uv sync --extra s3`.
 
 Der Katalog liegt standardmäßig in `.konmari/catalog.duckdb`. Für Postgres 16: `uv sync --extra postgres` und `KONMARI_CATALOG=postgresql://...` oder `--catalog`. Schnittstelle für spätere Changes: [docs/gate-contract.md](docs/gate-contract.md). Tests: `uv run pytest -q`.
 

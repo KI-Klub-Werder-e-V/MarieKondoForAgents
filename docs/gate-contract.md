@@ -54,7 +54,7 @@ sc.stakeholders["ben"]                  # register entry (name, contact, roles)
 
 ## Audit trail
 
-Write your own decisions with `konmari.catalog.audit(cat, action, actor=..., charter_id=..., charter_version=..., step=..., result=..., details={...})`. `audit_event` is append-only. The catalog layer refuses `UPDATE`, `DELETE` and `TRUNCATE` on it, and on Postgres a trigger refuses them too. c07 adds hash chaining.
+Write your own decisions with `konmari.catalog.audit(cat, action, actor=..., charter_id=..., charter_version=..., step=..., result=..., details={...})`. `audit_event` is append-only. The catalog layer refuses `UPDATE`, `DELETE` and `TRUNCATE` on it, and on Postgres a trigger refuses them too. Since c04 every event is hash-chained (`seq`, `prev_hash`, `hash` = SHA-256 over the previous hash and the canonical JSON of the event); `konmari.catalog.verify_chain(cat)` returns the first broken event or `None`. Events written before the c04 migration have no `seq` and are outside the chain. c07 `audit-logging` verifies the same chain.
 
 ## Category sequence and step order (from c02)
 
@@ -81,3 +81,23 @@ effective_verdict(cat, asset_uri)   # "keep" | "fix" | "discard" | None (never a
 ```
 
 It returns the latest approved verdict (accept, override or reversal) from the append-only `verdict_review` history. `konmari.scorecard.review.status(cat, asset_uri)["status"]` is `proposed` while a re-score waits for review. Evidence for the scorecard is written with `konmari.scorecard.probes.record_evidence(cat, asset_uri, kind, payload, ref, actor, captured_at)`; the kinds and their allowed fields are in `probes.KINDS` (references, hashes, counts and flags only). After a fix, call `konmari.scorecard.engine.complete_fix(cat, asset_uri, criterion, actor)` to re-score.
+
+## Discard pass (from c04)
+
+Later steps read only the **kept items**: the active pilot corpus. Archived, excluded, awaiting-masking and restricted items never appear there.
+
+```python
+from konmari.discard import kept_items, register_derived, check_propagation, awaiting_masking, register_masked
+
+kept_items(cat, charter_id)            # c05 normalization, c06 chunking, c08 data products: rows of view kept_item
+register_derived(cat, item_id, artifact_id, kind)   # c06/c08: register every chunk, embedding or product row
+check_propagation(cat, charter_id, index)           # c09: {item_id: [artifact IDs still present]}; {} = clean
+awaiting_masking(cat, charter_id)      # c07 sensitive-data-masking: items handed over for masking
+register_masked(cat, scope, item_id, masked_ref, actor)  # c07: the masked version re-enters the corpus
+```
+
+- `index` is any object with `present(ids) -> set` (and `delete(ids)` for execution); `konmari.discard.archive.JsonIndex` is the file stub. Without an index every registered artifact of a discarded item counts as present.
+- Canonical members: table `cluster` (`family` exact | lexical | semantic, `canonical_item`, `canonical_reason`). c05 can replace the ranking (source-of-truth > effective date > version > completeness) without changing this table.
+- Lineage: every transition out of `active` emits an OpenLineage `DatasetEvent` (namespace from the asset URI, name = item ID) with the facet `konmari_discard` {`previous_state`, `state`, `proposal_id`, `derived_artifacts_marked`} to the same transport as c02 (`$KONMARI_LINEAGE_FILE`, default `.konmari/lineage.jsonl`).
+- Decision events: view `decision_event` (= `audit_event` rows with `step = 'discard'`); `details` holds `item_id`, `prior_state`, `new_state` and the action, never item content. `konmari discard log export` writes them as JSONL for c07.
+- Retention: `konmari.discard.retention.approved_rule(cat, charter_id, category)` and `expiry_date(rule, item)`; c09 freshness monitoring can reuse the `retention_check_run` schedule.

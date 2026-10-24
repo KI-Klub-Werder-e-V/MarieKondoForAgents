@@ -6,6 +6,7 @@ readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.12"
 dependencies = [
+    "datasketch==2.0.0",
     "duckdb==2.0.0",
     "jsonschema==4.26.0",
     "presidio-analyzer==2.2.364",
@@ -16,12 +17,14 @@ dependencies = [
 [project.optional-dependencies]
 postgres = ["psycopg[binary]==3.3.6"]
 smb = ["smbprotocol==1.15.0"]
+semantic = ["sentence-transformers==6.2.0"]
+s3 = ["boto3==1.43.118"]
 
 [project.scripts]
 konmari = "konmari.cli:main"
 
 [dependency-groups]
-dev = ["pytest==9.1.1", "psycopg[binary]==3.3.6"]
+dev = ["pytest==9.1.1", "psycopg[binary]==3.3.6", "boto3==1.43.118"]
 
 [build-system]
 requires = ["hatchling"]

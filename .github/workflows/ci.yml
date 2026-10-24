@@ -12,9 +12,23 @@ jobs:
         options: --health-cmd pg_isready --health-interval 5s --health-retries 10
     env:
       KONMARI_TEST_PG_URL: postgresql://konmari@localhost:5432/postgres
+      # c04 archive target test against MinIO (S3-compatible); throwaway CI credentials
+      AWS_ACCESS_KEY_ID: konmari
+      AWS_SECRET_ACCESS_KEY: konmari-ci-only
+      AWS_DEFAULT_REGION: us-east-1
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --locked
+      # MinIO no longer publishes public images, so CI builds the server from source; if that breaks upstream,
+      # the S3 archive test is skipped instead of failing the build (KONMARI_TEST_S3_URL stays unset).
+      - uses: actions/setup-go@v5
+        with: {go-version: stable}
+      - name: start MinIO
+        continue-on-error: true
+        run: |
+          go install github.com/minio/minio@latest
+          MINIO_ROOT_USER=konmari MINIO_ROOT_PASSWORD=konmari-ci-only nohup "$(go env GOPATH)/bin/minio" server /tmp/minio-data --address :9000 > /tmp/minio.log 2>&1 &
+          for i in $(seq 60); do curl -sf http://localhost:9000/minio/health/live && echo "KONMARI_TEST_S3_URL=http://localhost:9000" >> "$GITHUB_ENV" && break; sleep 1; done
       - run: uv run pytest -q
       - run: npx -y @fission-ai/openspec@1.6.0 validate --all --strict

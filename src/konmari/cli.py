@@ -15,6 +15,15 @@ from konmari.charter import store as cs
 from konmari.charter.gate import gate
 from konmari.charter.validation import STEPS, roles_by_id, validate_charter
 from konmari.categories import store as cats
+from konmari.catalog import verify_chain
+from konmari.discard import calibrate as dcal
+from konmari.discard import corpus as dcorp
+from konmari.discard import decisions as dd
+from konmari.discard import detect as ddet
+from konmari.discard import events as dev
+from konmari.discard import report as drep
+from konmari.discard import retention as dret
+from konmari.discard.archive import JsonIndex, archive_for
 from konmari.inventory import lineage
 from konmari.inventory import sensitivity as sens
 from konmari.inventory import store as inv
@@ -605,6 +614,230 @@ def scorecard_compare(a, cat_url):
     return 0
 
 
+# ---------------------------------------------------------------- discard
+
+def discard_detect(a, cat_url):
+    cat = connect(cat_url)
+    rep = ddet.detect(cat, a.charter, a.as_ or "konmari-discard", ddet.load_config(a.config), a.items)
+    warn = [w for w in [dret.overdue(cat, rep["charter_id"])] if w]
+    md, js = drep.write(rep, a.report_dir, warn)
+    print(drep.render_md(rep, warn), end="")
+    print(f"report written to {md} and {js}")
+    return 0
+
+
+def discard_calibrate(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    if a.sample:
+        pairs = dcal.sample(cat, sc.charter_id, a.detector, a.sample)
+        out = Path(a.output)
+        dcal.write_sample(cat, pairs, out, out.with_suffix(".html"))
+        print(f"{len(pairs)} pair(s) written to {out} (fill the label column: {', '.join(dcal.LABELS)}); "
+              f"side-by-side view: {out.with_suffix('.html')}")
+        return 0
+    if a.labels:
+        print(f"{dcal.record_labels(cat, sc, a.labels, a.as_)} label(s) stored for {a.detector}")
+    if a.override_reason:
+        dcal.override(cat, sc, a.detector, a.threshold, a.override_reason, a.as_)
+        print(f"override recorded for {a.detector} by {a.as_}: {a.override_reason}")
+    elif a.threshold is not None:
+        row = dcal.select(cat, sc, a.detector, a.threshold, a.as_)
+        print(f"threshold {a.threshold} selected for {a.detector} by {a.as_} ({row['labels']} labels)")
+    n, m = dcal.metrics(cat, a.detector, (*dcal.REPORT_THRESHOLDS, *([a.threshold] if a.threshold else [])))
+    print(f"{a.detector}: {n} labeled pair(s)")
+    for t, pr in m.items():
+        print(f"  threshold {t}: precision {pr['precision']}, recall {pr['recall']} ({pr['predicted']} predicted)")
+    return 0
+
+
+def _print_proposal(p):
+    act = p["decided_action"] or p["action"]
+    changed = f" (proposed {p['action']})" if act != p["action"] else ""
+    print(f"{p['proposal_id']} {p['status']} {act}{changed} {p['item_id']} [{p['category_id']}, {p['method']}]: "
+          f"{p['reason']}")
+
+
+def discard_propose(a, cat_url):
+    cat = connect(cat_url)
+    res = dd.propose(cat, _scope(a, cat), a.as_)
+    for p in res["created"]:
+        _print_proposal(p)
+    for d, n in res["blocked"].items():
+        print(f"blocked: {n} {d} flag(s) create no proposals; calibration missing for detector '{d}' "
+              f"(konmari discard calibrate --detector {d} ...)")
+    for c, why in res["waiting"].items():
+        print(f"waiting: category {c} gets no proposals yet: {'; '.join(why)}")
+    print(f"{len(res['created'])} proposal(s) created; nothing changes until they are approved and executed")
+    return 0
+
+
+def discard_list(a, cat_url):
+    cat = connect(cat_url)
+    for p in dd.list_proposals(cat, _scope(a, cat).charter_id, a.status):
+        _print_proposal(p)
+    return 0
+
+
+def discard_decide(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    p = dd.decide(cat, sc, a.proposal, a.as_, "reject" if a.cmd == "reject" else "approve",
+                  getattr(a, "action", None), a.comment, getattr(a, "compliance", False), ddet.load_config(a.config))
+    _print_proposal(p)
+    return 0
+
+
+def discard_bulk(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    ids = dd.bulk_approve(cat, sc, a.action, a.category, a.method, a.as_, a.yes, a.comment)
+    for i in ids:
+        print(i)
+    print(f"{len(ids)} proposal(s) " + ("approved" if a.yes else "would be approved; repeat with --yes to confirm"))
+    return 0
+
+
+def discard_cancel(a, cat_url):
+    cat = connect(cat_url)
+    _print_proposal(dd.cancel(cat, _scope(a, cat), a.proposal, a.as_, a.comment))
+    return 0
+
+
+def discard_request(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    _print_proposal(dd.create_proposal(cat, sc, dcorp.require(cat, a.item), a.action, "request", [], a.as_, a.reason))
+    return 0
+
+
+def discard_off_scope(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    dcorp.require(cat, a.item)
+    cat.execute("INSERT INTO flag VALUES (?, NULL, 'off-scope', 'reviewer', ?, '[]', NULL, ?, ?, NULL, ?, ?)",
+                (dd.new_id(), a.item, json.dumps({"category": a.reason}), json.dumps({"reason": "reviewer"}),
+                 dd.now(), a.as_))
+    dev.log(cat, sc, "mark_off_scope", a.item, None, None, a.as_, reason=a.reason)
+    print(f"{a.item}: flagged off-scope by {a.as_}; the next 'konmari discard propose' proposes exclude")
+    return 0
+
+
+def discard_execute(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    res = dd.execute(cat, sc, a.as_, archive_for(a.archive), a.proposal, lineage.default_transport(),
+                     JsonIndex(a.index) if a.index else None)
+    for r in res:
+        print(f"{r['proposal_id']} {r['action']} {r['item_id']}: {r['result']}"
+              + (f" ({r['message']})" if r.get("message") else ""))
+    return 1 if any(r["result"] in ("failed", "refused") for r in res) else 0
+
+
+def discard_restore(a, cat_url):
+    cat = connect(cat_url)
+    dd.restore(cat, _scope(a, cat), a.item, a.as_, archive_for(a.archive))
+    print(f"{a.item}: restored to active (checksum verified)")
+    return 0
+
+
+def discard_history(a, cat_url):
+    for r in dev.history(connect(cat_url), a.item):
+        d = r["details"]
+        print(f"{r['ts']:%Y-%m-%d %H:%M:%S} {r['action']} by {r['actor']} ({r['result']}): "
+              f"{d.get('prior_state')} -> {d.get('new_state')}"
+              + (f", action {d['action']}" if d.get("action") else ""))
+    return 0
+
+
+def discard_log(a, cat_url):
+    cat = connect(cat_url)
+    if a.op == "verify":
+        bad = verify_chain(cat)
+        if bad:
+            return _fail(f"decision log chain broken at event {bad['seq']} (id {bad['id']}, {bad['action']})")
+        n = cat.one("SELECT COUNT(*) AS n FROM audit_event WHERE seq IS NOT NULL")["n"]
+        print(f"decision log verified: {n} chained event(s)")
+        return 0
+    rows = cat.query("SELECT * FROM audit_event WHERE seq IS NOT NULL ORDER BY seq")
+    text = "".join(json.dumps(r, default=str, sort_keys=True) + "\n" for r in rows)
+    if a.output:
+        Path(a.output).write_text(text, encoding="utf-8")
+        print(f"wrote {a.output} ({len(rows)} events)")
+    else:
+        print(text, end="")
+    return 0
+
+
+def discard_propagation(a, cat_url):
+    cat = connect(cat_url)
+    left = dd.check_propagation(cat, _scope(a, cat).charter_id, JsonIndex(a.index) if a.index else None)
+    for iid, ids in left.items():
+        print(f"{iid}: {', '.join(ids)}")
+    if left:
+        return _fail(f"{sum(map(len, left.values()))} derived artifact(s) of discarded items are still present")
+    print("propagation check passed: no derived artifacts of discarded items remain")
+    return 0
+
+
+def discard_report(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    rep = drep.latest(cat, sc.charter_id, a.run)
+    if rep is None:
+        return _fail("no detection run yet; run 'konmari discard detect' first")
+    warn = [w for w in [dret.overdue(cat, sc.charter_id)] if w]
+    print(json.dumps(rep | {"warnings": warn}, indent=2, sort_keys=True) if a.format == "json"
+          else drep.render_md(rep, warn), end="\n" if a.format == "json" else "")
+    return 0
+
+
+# ---------------------------------------------------------------- retention
+
+def retention_rule(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    if a.op == "add":
+        r = dret.add_rule(cat, sc, a.category, a.purpose, a.legal_basis, a.source, a.start_event, a.period,
+                          a.expiry_action, a.as_)
+        print(f"rule {r['rule_id']} for {a.category} registered (proposed); compliance approves with "
+              f"'konmari retention rule approve {r['rule_id']} --as <id>'")
+    elif a.op == "approve":
+        r = dret.approve_rule(cat, sc, a.rule, a.as_)
+        print(f"rule {r['rule_id']} for {r['category_id']} approved by {a.as_} at {r['approved_at']:%Y-%m-%d}")
+    else:
+        for r in dret.rules(cat, sc.charter_id):
+            by = f", by {r['approver']}" if r["approver"] else ""
+            print(f"{r['rule_id']} {r['category_id']} ({r['status']}{by}):"
+                  f" {r['period']} from {r['start_event']}, then {r['expiry_action']}; source {r['source']}; "
+                  f"basis {r['legal_basis']}; purpose {r['purpose']}")
+    return 0
+
+
+def retention_hold(a, cat_url):
+    cat = connect(cat_url)
+    sc = _scope(a, cat)
+    if a.op == "add":
+        h = dret.add_hold(cat, sc, a.reason, a.owner, a.review_date, a.as_, a.item, a.category)
+        print(f"legal hold {h['hold_id']} recorded on {a.item or a.category}")
+    elif a.op == "release":
+        dret.release_hold(cat, sc, a.hold, a.as_)
+        print(f"legal hold {a.hold} released")
+    else:
+        for h in cat.query("SELECT * FROM legal_hold WHERE charter_id = ? AND released_at IS NULL", (sc.charter_id,)):
+            print(f"{h['hold_id']} {h['item_id'] or h['category_id']}: {h['reason']} (owner {h['owner']}, "
+                  f"review {h['review_date']})")
+    return 0
+
+
+def retention_check(a, cat_url):
+    cat = connect(cat_url)
+    for p in dret.check(cat, _scope(a, cat), a.as_, a.window_days, a.schedule):
+        _print_proposal(p)
+    print("retention check recorded")
+    return 0
+
+
 # ---------------------------------------------------------------- parser
 
 def build_parser() -> argparse.ArgumentParser:
@@ -841,6 +1074,102 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("run_b")
     q.add_argument("--allow-rubric-mismatch", action="store_true")
     q.set_defaults(fn=scorecard_compare)
+
+    di = groups.add_parser("discard", help="discard pass: detect duplicates and clutter, propose, approve, execute, "
+                                           "restore, decision log")
+    dis = di.add_subparsers(dest="cmd", required=True)
+    q = ccmd(dis, "detect", discard_detect, "fingerprint the pilot's inventoried items and flag clutter (changes "
+                                            "no data)", actor="optional")
+    q.add_argument("--items", help="item manifest (JSONL or YAML) for assets whose items were exported to files")
+    q.add_argument("--config", help="detector settings (default: discard.yaml if present)")
+    q.add_argument("--report-dir", default=".konmari/reports")
+    q = ccmd(dis, "calibrate", discard_calibrate, "sample pairs, store expert labels, report precision/recall, "
+                                                  "select a threshold or record an override", actor="optional")
+    q.add_argument("--detector", required=True, choices=ddet.DETECTORS)
+    q.add_argument("--sample", type=int, help="write this many pairs, spread over the score range")
+    q.add_argument("-o", "--output", default="calibration-pairs.csv")
+    q.add_argument("--labels", help="the filled-in CSV")
+    q.add_argument("--threshold", type=float, help="select this threshold (needs 50 labels)")
+    q.add_argument("--override-reason", help="use the detector without 50 labels (approver only)")
+    ccmd(dis, "propose", discard_propose, "turn flags and approved scorecard 'discard' verdicts into proposals")
+    q = ccmd(dis, "list", discard_list, "list proposals", actor=None)
+    q.add_argument("--status", choices=["pending", "approved", "rejected", "scheduled", "executed", "cancelled"])
+    for name, help in [("approve", "approve a proposal (optionally with another --action)"),
+                       ("reject", "reject a proposal")]:
+        q = ccmd(dis, name, discard_decide, help)
+        q.add_argument("proposal")
+        q.add_argument("--comment")
+        q.add_argument("--config")
+        if name == "approve":
+            q.add_argument("--action", choices=dd.ACTIONS, help="change the proposed action")
+            q.add_argument("--compliance", action="store_true", help="the second (compliance) approval of an erasure")
+    q = ccmd(dis, "bulk-approve", discard_bulk, "approve all pending proposals with one action, category and method")
+    q.add_argument("--action", required=True, choices=dd.ACTIONS)
+    q.add_argument("--category", required=True)
+    q.add_argument("--method", required=True)
+    q.add_argument("--yes", action="store_true", help="confirm after checking the listed item IDs")
+    q.add_argument("--comment")
+    q = ccmd(dis, "cancel", discard_cancel, "cancel an open proposal, e.g. an erasure during its waiting period")
+    q.add_argument("proposal")
+    q.add_argument("--comment")
+    q = ccmd(dis, "request", discard_request, "propose an action for one item by hand (e.g. an erasure request)")
+    q.add_argument("item")
+    q.add_argument("--action", required=True, choices=dd.ACTIONS)
+    q.add_argument("--reason", required=True)
+    q = ccmd(dis, "mark-off-scope", discard_off_scope, "flag an item as not needed for the pilot (reviewer)")
+    q.add_argument("item")
+    q.add_argument("--reason", required=True)
+    q = ccmd(dis, "execute", discard_execute, "execute approved decisions and due erasures")
+    q.add_argument("--proposal")
+    q.add_argument("--archive", help="filesystem path or s3://bucket/prefix (default: $KONMARI_ARCHIVE or "
+                                     ".konmari/archive)")
+    q.add_argument("--index", help="JSON list of artifact IDs present in the downstream index (stub adapter)")
+    q = ccmd(dis, "restore", discard_restore, "restore an archived or excluded item (checksum verified)")
+    q.add_argument("item")
+    q.add_argument("--archive")
+    q = dis.add_parser("history", help="the decision history of one item")
+    q.add_argument("item")
+    q.set_defaults(fn=discard_history)
+    q = dis.add_parser("log", help="verify or export the hash-chained decision log")
+    q.add_argument("op", choices=["verify", "export"])
+    q.add_argument("-o", "--output")
+    q.set_defaults(fn=discard_log)
+    q = ccmd(dis, "check-propagation", discard_propagation, "fail while derived artifacts of discarded items remain",
+             actor=None)
+    q.add_argument("--index", help="JSON list of artifact IDs present in the downstream index (stub adapter)")
+    q = ccmd(dis, "report", discard_report, "latest run report with duplicate rate and warnings", actor=None)
+    q.add_argument("--run")
+    q.add_argument("--format", choices=["md", "json"], default="md")
+
+    re_ = groups.add_parser("retention", help="retention rules per category, legal holds, expiry check")
+    res = re_.add_subparsers(dest="cmd", required=True)
+    rule = res.add_parser("rule", help="register, list and approve retention rules").add_subparsers(dest="op",
+                                                                                                   required=True)
+    q = ccmd(rule, "add", retention_rule, "register a rule for one category (no wildcard)")
+    q.add_argument("--category", required=True)
+    q.add_argument("--purpose", required=True)
+    q.add_argument("--legal-basis", required=True, help="e.g. 'Art. 6(1)(c) DSGVO'")
+    q.add_argument("--source", required=True, help="statute and paragraph, contract or internal policy")
+    q.add_argument("--start-event", required=True, choices=dret.START_EVENTS)
+    q.add_argument("--period", required=True, help="ISO 8601 duration, e.g. P8Y")
+    q.add_argument("--expiry-action", required=True, choices=dret.EXPIRY_ACTIONS)
+    ccmd(rule, "list", retention_rule, "list rules", actor=None)
+    q = ccmd(rule, "approve", retention_rule, "approve a rule (compliance)")
+    q.add_argument("rule")
+    hold = res.add_parser("hold", help="legal holds on items or categories").add_subparsers(dest="op", required=True)
+    q = ccmd(hold, "add", retention_hold, "put an item or a category on legal hold")
+    g = q.add_mutually_exclusive_group(required=True)
+    g.add_argument("--item")
+    g.add_argument("--category")
+    q.add_argument("--reason", required=True)
+    q.add_argument("--owner", required=True)
+    q.add_argument("--review-date", required=True, help="YYYY-MM-DD")
+    q = ccmd(hold, "release", retention_hold, "release a legal hold (owner or compliance)")
+    q.add_argument("hold")
+    ccmd(hold, "list", retention_hold, "list active legal holds", actor=None)
+    q = ccmd(res, "check", retention_check, "propose actions for items whose retention ends soon (incl. archive)")
+    q.add_argument("--window-days", type=int, default=ddet.DEFAULTS["retention_window_days"])
+    q.add_argument("--schedule", default=ddet.DEFAULTS["retention_schedule"], help="interval between checks (P7D)")
     return p
 
 

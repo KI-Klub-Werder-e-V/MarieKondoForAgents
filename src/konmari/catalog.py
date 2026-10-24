@@ -1,6 +1,7 @@
 """Readiness catalog: DuckDB (default, local) or Postgres 16, same migrations, plus the append-only audit writer."""
 
 import getpass
+import hashlib
 import json
 import os
 import re
@@ -10,8 +11,9 @@ from importlib.resources import files
 from pathlib import Path
 
 DEFAULT_URL = "duckdb:///.konmari/catalog.duckdb"
-# audit_event, published rubric versions and the verdict review history are append-only
-_AUDIT_MUTATION = re.compile(r"^\s*(update|delete\s+from|truncate)\s+(table\s+)?(audit_event|rubric_version|verdict_review)\b",
+# audit_event (and its decision_event view), published rubric versions and the verdict review history are append-only
+_AUDIT_MUTATION = re.compile(
+    r"^\s*(update|delete\s+from|truncate)\s+(table\s+)?(audit_event|decision_event|rubric_version|verdict_review)\b",
                              re.I)
 
 
@@ -103,15 +105,41 @@ def connect(url: str | None = None) -> Catalog:
     return cat
 
 
+_CHAIN = ("id", "ts", "actor", "action", "charter_id", "charter_version", "step", "result", "details")
+
+
+def event_hash(prev_hash: str, row: dict) -> str:
+    """SHA-256 over the previous hash plus the canonical JSON of the event (c04 design D6)."""
+    body = {k: row[k].isoformat() if isinstance(row[k], datetime) else row[k] for k in _CHAIN}
+    return hashlib.sha256((prev_hash + json.dumps(body, sort_keys=True, separators=(",", ":"))).encode()).hexdigest()
+
+
 def audit(cat: Catalog, action: str, *, actor: str | None = None, charter_id=None, charter_version=None,
           step=None, result=None, details: dict | None = None) -> None:
-    """The only writer for audit_event; every command records its decisions here."""
+    """The only writer for audit_event; every command records its decisions here, hash-chained to the previous
+    event."""
+    # shortcut: seq = last + 1 assumes one writer at a time; add a lock or sequence for concurrent writers
+    last = cat.one("SELECT seq, hash FROM audit_event WHERE seq IS NOT NULL ORDER BY seq DESC LIMIT 1")
+    row = {"id": new_id(), "ts": now(), "actor": actor or os_user(), "action": action, "charter_id": charter_id,
+           "charter_version": charter_version, "step": step, "result": result,
+           "details": json.dumps(details or {}, sort_keys=True, default=str)}
+    prev = last["hash"] if last else ""
     cat.execute(
-        "INSERT INTO audit_event (id, ts, actor, action, charter_id, charter_version, step, result, details)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        (new_id(), now(), actor or os_user(), action, charter_id, charter_version, step, result,
-         json.dumps(details or {}, sort_keys=True, default=str)),
+        "INSERT INTO audit_event (id, ts, actor, action, charter_id, charter_version, step, result, details, seq,"
+        " prev_hash, hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (*row.values(), (last["seq"] + 1) if last else 1, prev, event_hash(prev, row)),
     )
+
+
+def verify_chain(cat: Catalog) -> dict | None:
+    """The first chained event whose hash, predecessor or position no longer matches, or None if the chain holds."""
+    prev, seq = "", 0
+    for r in cat.query("SELECT * FROM audit_event WHERE seq IS NOT NULL ORDER BY seq"):
+        seq += 1
+        if r["seq"] != seq or r["prev_hash"] != prev or r["hash"] != event_hash(prev, r):
+            return r
+        prev = r["hash"]
+    return None
 
 
 def audit_change(cat: Catalog, action: str, entity: str, previous, new, *, actor: str | None = None,

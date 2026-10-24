@@ -117,7 +117,7 @@ def blank_nlp_model(tmp_path_factory):
 SP_SITE = "contoso.sharepoint.com/sites/support"
 
 
-def approve_pilot(cli, sources, categories=None):
+def approve_pilot(cli, sources, categories=None, approvers=None):
     """Point the engagement charter at `sources`, put all five default categories in scope, approve
     charter and metrics, and record baselines so the inventory gate passes."""
     cats = categories or ["kb-and-sops", "customer-records", "policies-and-contracts", "financial-ops-metrics",
@@ -125,7 +125,8 @@ def approve_pilot(cli, sources, categories=None):
 
     def fn(d):
         d["data_scope"]["sources"] = sources
-        d["data_scope"]["categories"] = [{"id": c, "approver": "ben", "reviewers": ["clara"]} for c in cats]
+        d["data_scope"]["categories"] = [{"id": c, "approver": (approvers or {}).get(c, "ben"), "reviewers": ["clara"]}
+                                         for c in cats]
     edit_yaml("charter.yaml", fn)
     for args in [("charter", "approve", "--as", "anna"), ("metrics", "approve", "--as", "ben"),
                  ("metrics", "baseline", "answer_accuracy", "--value", 0.4, "--method", "m", "--as", "clara"),
@@ -213,3 +214,85 @@ def dump_catalog(cat) -> str:
     for t in cat.query("SELECT table_name FROM information_schema.tables WHERE table_schema IN ('main', 'public')"):
         out += [repr(r) for r in cat.query(f"SELECT * FROM {t['table_name']}")]
     return "\n".join(out)
+
+
+# ---------------------------------------------------------------- c04 fixtures
+
+DP_ASSETS = {  # asset_uri: (category, sensitivity tier)
+    "manual://kb/sops": ("kb-and-sops", "internal"),
+    "manual://kb/faq-export": ("kb-and-sops", "public"),
+    "manual://support/tickets": ("support-history", "internal"),
+    "manual://policies/contracts": ("policies-and-contracts", "confidential"),
+    "manual://finance/payroll": ("financial-ops-metrics", "personal"),
+    "manual://crm/invoices": ("customer-records", "personal"),
+    "manual://hr/applications": ("customer-records", "personal"),
+}
+DP_CATEGORIES = ["kb-and-sops", "support-history", "policies-and-contracts", "customer-records"]
+
+
+@pytest.fixture
+def dp(engagement, cli, tmp_path, monkeypatch, request):
+    """Approved support pilot (financial-ops-metrics out of scope) with csv-import assets handed off through c02 and
+    scored (c03 step complete); `items([...])` writes synthetic item files plus a manifest."""
+    import csv
+    import json
+
+    from konmari.categories import store as cats
+    from konmari.charter.store import scope
+
+    if "pg_url" in request.fixturenames:
+        monkeypatch.setenv("KONMARI_CATALOG", request.getfixturevalue("pg_url"))
+    monkeypatch.setenv("KONMARI_LINEAGE_FILE", str(tmp_path / "lineage.jsonl"))
+    monkeypatch.setenv("KONMARI_ARCHIVE", str(tmp_path / "archive"))
+    csvf = tmp_path / "assets.csv"
+    approve_pilot(cli, [{"id": "manual-assets", "connector": "csv-import", "locator": str(csvf),
+                         "categories": DP_CATEGORIES}], DP_CATEGORIES, {"policies-and-contracts": "clara"})
+
+    def ok(*args):
+        code, out, err = cli(*args)
+        assert code == 0, (args, err)
+        return out
+
+    ok("metrics", "baseline", "time_to_answer", "--value", 120, "--method", "stopwatch", "--as", "ben")
+    cols = ["asset_uri", "title", "system_type", "owner", "steward", "update_frequency", "format", "sensitivity_tier",
+            "ropa_ref"]
+    with csvf.open("w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, cols)
+        w.writeheader()
+        for uri, (_, tier) in DP_ASSETS.items():
+            w.writerow({"asset_uri": uri, "title": uri.rsplit("/", 1)[-1], "system_type": "manual", "owner": "ben",
+                        "steward": "clara", "update_frequency": "P1M", "format": "text/plain", "sensitivity_tier": tier,
+                        "ropa_ref": "ropa-7"})
+    ok("inventory", "source", "add", "--connector", "csv-import", "--locator", csvf, "--as", "dirk")
+    ok("inventory", "import", csvf, "--as", "dirk")
+    for uri, (c, _) in DP_ASSETS.items():
+        ok("categories", "assign", uri, c, "--as", "ben")
+    ok("categories", "order", "--propose", "--as", "ben")
+    ok("categories", "approve", "--as", "ben")
+    ok("categories", "handoff")
+    cat = connect()
+    sc = scope("verein-faq-assistant", cat)
+    for c in cats.approved_order(cat, sc.charter_id)["categories"]:
+        if c in sc.categories:
+            cats.set_step(cat, sc, c, "score", "complete", "ben")
+            cats.waive_step(cat, sc, c, "discard", "ben", "fixture: all categories in one discard pass")
+    files = tmp_path / "items"
+    files.mkdir()
+    manifest = tmp_path / "items.jsonl"
+
+    def items(entries, extra_lines=()):
+        """entries: dicts with asset_uri, name, text and optional metadata keys."""
+        with manifest.open("w", encoding="utf-8") as f:
+            for e in entries:
+                e = dict(e)
+                p = files / e.pop("name")
+                data = e.pop("text")
+                p.write_bytes(data if isinstance(data, bytes) else data.encode())
+                f.write(json.dumps({"path": str(p), **e}) + "\n")
+            for line in extra_lines:
+                f.write(json.dumps(line) + "\n")
+        return manifest
+
+    yield {"cat": cat, "ok": ok, "items": items, "manifest": manifest, "files": files, "tmp": tmp_path,
+           "lineage": tmp_path / "lineage.jsonl", "archive": tmp_path / "archive"}
+    cat.close()
