@@ -142,7 +142,7 @@ Anforderungen, Szenarien und Recherche-Notizen samt Quellen in [`research/`](res
 - Alle neun Schritte sind umgesetzt, von der Charta bis zur Überwachung: 22 Befehlsgruppen,
   686 automatische Tests (DuckDB und Postgres 16), jedes Spec-Szenario mit eigenem Test.
 - Jeder Schritt wurde nach dem Bauen von einem unabhängigen Prüfdurchlauf gegen die Spezifikation
-  gelesen; dabei wurden 8 echte Fehler gefunden und behoben, darunter einer, bei dem gelöschte
+  gelesen; dabei wurden 6 echte Fehler gefunden und behoben, darunter einer, bei dem gelöschte
   Daten beim nächsten Scan wieder aufgetaucht wären.
 - Drei Aufgaben sind bewusst offen: ein optionaler Debezium-Adapter für Echtzeit-Änderungen,
   die Abstimmung einer Schnittstelle zwischen den Schritten und ein Test der Anleitung durch

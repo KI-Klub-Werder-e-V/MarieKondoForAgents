@@ -142,7 +142,7 @@ scenarios and research notes with sources in [`research/`](research/).
 - All nine steps are implemented, from charter to monitoring: 22 command groups, 686 automated
   tests (DuckDB and Postgres 16), every spec scenario with its own test.
 - After each step was built, an independent verification pass read it against the spec and
-  found and fixed 8 real bugs, including one where erased data would have reappeared on the
+  found and fixed 6 real bugs, including one where erased data would have reappeared on the
   next scan.
 - Three tasks are deliberately open: an optional Debezium adapter for real-time changes, a
   sign-off on one interface between steps, and a review of the guide by a non-developer.
