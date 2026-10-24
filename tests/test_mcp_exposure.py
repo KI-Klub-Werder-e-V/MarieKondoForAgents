@@ -539,3 +539,16 @@ def test_jwks_fetched_from_the_issuer_url():
     assert v(iss.token(RESOURCE))["sub"] == "finn"
     assert v(iss.token(RESOURCE))["act"] == {"sub": "faq-bot"}
     assert calls == ["https://id.example.org/certs"]  # cached
+
+
+
+@pytest.mark.parametrize("body", [["not-an-object"], [None], "x", {"method": "tools/call", "params": "x"}])
+def test_malformed_request_reaches_the_mcp_app(gate_app, body):
+    """The gate must not crash on a malformed JSON-RPC body; the SDK answers it with a JSON-RPC error."""
+    async def inner(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"{}"})
+    gate = auth.AuthGate(inner, gate_app["core"], RESOURCE, [fx.ISSUER], auth.JwksValidator(fx.ISSUER,
+                                                                                            jwks=gate_app["iss"].jwks))
+    tok = gate_app["iss"].token(RESOURCE)
+    assert http(gate, "POST", "/mcp", {"Authorization": f"Bearer {tok}"}, body).status_code == 200

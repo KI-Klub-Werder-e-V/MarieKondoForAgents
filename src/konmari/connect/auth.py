@@ -119,7 +119,9 @@ class AuthGate:
         except ValueError:
             req = {}
         for r in req if isinstance(req, list) else [req]:
-            params = (r or {}).get("params") or {}
+            if not isinstance(r, dict):  # malformed: the MCP app answers with a JSON-RPC error
+                continue
+            params = r.get("params") if isinstance(r.get("params"), dict) else {}
             target = params.get("name") if r.get("method") == "tools/call" else \
                 params.get("uri") if r.get("method") == "resources/read" else None
             pid = target and self.core.product_of(target)
