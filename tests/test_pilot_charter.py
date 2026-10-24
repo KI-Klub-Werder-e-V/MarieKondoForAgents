@@ -156,6 +156,17 @@ def test_overdue_steering_meeting_reported(engagement, cat, charter_doc):
     assert store.status(cat, charter_doc["charter_id"], today=date(2026, 3, 22))["cadence_breach"] is None
 
 
+def test_overdue_steering_meeting_reported_by_cli(engagement, cli):
+    from datetime import timedelta
+
+    cli("charter", "validate")
+    old = (date.today() - timedelta(days=22)).isoformat()
+    assert cli("charter", "log", "--meeting", "steering", "--date", old, "--attendees", "anna,eva",
+               "--decision", "kick off inventory", "--as", "gina")[0] == 0
+    code, out, _ = cli("charter", "status")
+    assert code == 0 and "cadence breach" in out and "Anna Beispiel (anna)" in out
+
+
 def test_decision_logged(engagement, cli, cat):
     cli("charter", "validate")
     code, _, _ = cli("charter", "log", "--meeting", "steering", "--date", "2026-02-10", "--attendees", "anna,eva",
