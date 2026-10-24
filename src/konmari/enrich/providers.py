@@ -1,7 +1,6 @@
 """External systems used by enrichment, each behind a small interface with a local adapter.
 
-- ACL capture: `manifest_acl` (permissions exported with the item manifest) and `SharePointAcl` (Graph, read-only).
-  shortcut: c07 access-control owns ACL capture and principal normalization; move these adapters there with c07.
+- ACL capture lives in `konmari.governance.acl` (c07 access-control); re-exported here for c06 callers.
 - Language models (opt-in only): `OpenAICompatible` for a self-hosted server (Ollama, vLLM, LocalAI) or an
   approved processor. Nothing here is called in the default profile.
 """
@@ -9,56 +8,7 @@
 import json
 from urllib.request import Request, urlopen
 
-from konmari.inventory.connectors import GRAPH
-
-
-class AclUnavailable(Exception):
-    """The source could not be asked for permissions in this run (connector failure)."""
-
-
-def normalize_acl(allow, deny=()) -> dict:
-    """Normalized principals: '<type>:<name>' with type user|group|role; emails lower-cased."""
-    def norm(p):
-        kind, _, name = str(p).partition(":")
-        if not name:
-            kind, name = "group", kind
-        return f"{kind.strip().lower()}:{name.strip().lower() if kind == 'user' else name.strip()}"
-    return {"allow": sorted({norm(p) for p in allow}), "deny": sorted({norm(p) for p in deny})}
-
-
-def manifest_acl(item: dict | None, asset: dict) -> dict | None:
-    """Permissions exported with the item (manifest key `acl`: {allow: [...], deny: [...]}). None = unknown."""
-    acl = (item or {}).get("meta", {}).get("acl")
-    if not acl:
-        return None
-    return normalize_acl(acl.get("allow", []), acl.get("deny", []))
-
-
-class SharePointAcl:
-    """Item permissions from Microsoft Graph (`/drives/{drive}/items/{item}/permissions`); the item manifest carries
-    `drive_id` and `sp_item_id`. `http` is the read-only GraphHttp transport (a recorded fake in tests)."""
-
-    def __init__(self, http):
-        self.http = http
-
-    def __call__(self, item: dict | None, asset: dict) -> dict | None:
-        meta = (item or {}).get("meta", {})
-        if not meta.get("drive_id") or not meta.get("sp_item_id"):
-            return manifest_acl(item, asset)
-        try:
-            body = json.loads(self.http.get(f"{GRAPH}/drives/{meta['drive_id']}/items/{meta['sp_item_id']}/permissions"))
-        except Exception as e:  # any transport error: keep the previous tags and flag them acl_stale
-            raise AclUnavailable(f"{type(e).__name__}: {e}") from None
-        allow = []
-        for p in body.get("value", []):
-            if not set(p.get("roles", [])) & {"read", "write", "owner"}:
-                continue
-            for g in [p.get("grantedToV2") or {}] + list(p.get("grantedToIdentitiesV2") or []):
-                if grp := (g.get("group") or g.get("siteGroup")):
-                    allow.append(f"group:{grp.get('displayName')}")
-                elif usr := g.get("user"):
-                    allow.append(f"user:{usr.get('email') or usr.get('displayName')}")
-        return normalize_acl(allow) if allow else None
+from konmari.governance.acl import AclUnavailable, SharePointAcl, manifest_acl, normalize_acl  # noqa: F401
 
 
 class ContextModel:

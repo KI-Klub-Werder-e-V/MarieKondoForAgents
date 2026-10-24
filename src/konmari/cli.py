@@ -18,6 +18,14 @@ from konmari.chunking import store as cst
 from konmari.enrich import store as est
 from konmari.enrich.providers import OpenAICompatible
 from konmari.glossary import store as gls
+from konmari.governance import access as gaccess
+from konmari.governance import acl as gacl
+from konmari.governance import audit as gaudit
+from konmari.governance import config as gcfg
+from konmari.governance import gate as ggate
+from konmari.governance import pii as gpii
+from konmari.governance import policy as gpol
+from konmari.governance import records as grec
 from konmari.categories import store as cats
 from konmari.catalog import verify_chain
 from konmari.discard import calibrate as dcal
@@ -1216,6 +1224,220 @@ def glossary_cmd(a, cat_url):
     return 0
 
 
+# ---------------------------------------------------------------- govern and audit (c07)
+
+def _gov_scope(a, cat):
+    """c07 steps that change the catalog pass the readiness gate first, like c06."""
+    res = gate("govern", a.charter, cat, getattr(a, "as_", None))
+    if not res.passed:
+        raise Refused(res.unmet)
+    return _scope(a, cat)
+
+
+def _charter_doc(a):
+    p = Path(getattr(a, "charter", "charter.yaml"))
+    return load_yaml(p) if p.is_file() else None
+
+
+def _gov_cfg(a):
+    cfg = gcfg.load(a.config)
+    if errs := gcfg.validate(cfg, _charter_doc(a)):
+        raise Refused(errs)
+    return cfg
+
+
+def audit_cmd(a, cat_url):
+    cat = connect(cat_url)
+    if a.op == "verify":
+        bad = gaudit.verify(cat)
+        if bad:
+            return _fail(f"audit chain broken at event {bad['seq'] or '(unchained)'} (id {bad['id']}, "
+                         f"{bad['action']})")
+        n = cat.one("SELECT COUNT(*) AS n FROM audit_event")["n"]
+        print(f"audit trail verified: one chain, {n} event(s) from all steps")
+        return 0
+    if a.op == "purge":
+        _scope(a, cat)
+        rep = gaudit.purge(cat, gcfg.load(a.config), a.as_, _charter_doc(a))
+        print(f"purged {rep['deleted']} event(s) older than {rep['cutoff']}"
+              + (f"; checkpoint written (last purged seq {rep['to_seq']})" if rep["deleted"] else ""))
+        return 0
+    from datetime import datetime
+
+    sc = _scope(a, cat)
+    if a.subject and "compliance" not in sc.stakeholders[a.as_].get("roles", []):
+        return _fail(f"'{a.as_}' does not hold the compliance role")
+    text, n = gaudit.export(cat, a.as_, a.subject, a.from_ and datetime.fromisoformat(a.from_),
+                            a.to and datetime.fromisoformat(a.to), a.format)
+    Path(a.output).write_text(text, encoding="utf-8")
+    print(f"wrote {a.output} ({n} events, {a.format}); the export is recorded in the audit trail")
+    return 0
+
+
+def _policy_changes(a) -> dict:
+    ch = dict(load_yaml(Path(a.file)) or {}) if a.file else {}
+    for k in ("exposure", "sensitivity", "acl_sync_cadence", "owner", "legal_basis"):
+        if getattr(a, k, None) is not None:
+            ch[k] = getattr(a, k)
+    if a.tool:
+        ch["tools"] = a.tool
+    for m in a.mask or []:
+        ent, _, op = m.partition("=")
+        ch.setdefault("masking", {})[ent] = op
+    if a.allow:
+        ch["principals"] = {"allow": a.allow, "deny": a.deny or []}
+    if a.service_principal:
+        ch["service_principals"] = a.service_principal
+    return ch
+
+
+def govern_policy(a, cat_url):
+    cat = connect(cat_url)
+    if a.op == "show":
+        sc = _scope(a, cat)
+        rows = [r for p in ([a.policy] if a.policy else sc.categories) for r in gpol.versions(cat, p)]
+        _json([{k: r[k] for k in ("policy_id", "version", "status", "doc", "created_by", "approved_by",
+                                  "reverted_from")} for r in rows])
+        return 0
+    sc = _gov_scope(a, cat)
+    if a.op == "seed":
+        rows = gpol.seed(cat, sc, a.as_)
+        print(f"{len(rows)} draft polic{'y' if len(rows) == 1 else 'ies'} created (pending): "
+              + ", ".join(r["policy_id"] for r in rows))
+        return 0
+    if a.op == "edit":
+        r = gpol.edit(cat, sc, a.policy, _policy_changes(a), a.as_, a.reason)
+    elif a.op == "approve":
+        r = gpol.approve(cat, sc, a.policy, a.version, a.as_, a.reason)
+    else:
+        r = gpol.revert(cat, sc, a.policy, a.to, a.as_, a.reason)
+    print(f"policy {r['policy_id']} version {r['version']}: {r['status']}")
+    return 0
+
+
+def govern_grant(a, cat_url):
+    cat = connect(cat_url)
+    g = gpol.grant(cat, _gov_scope(a, cat), a.agent, a.category, a.tool, a.as_, a.days,
+                   gcfg.load(a.config)["grants"]["max_days"])
+    print(f"write grant {g['grant_id']}: {a.agent} may use {a.tool} on {a.category} until {g['expires_at']:%Y-%m-%d}")
+    return 0
+
+
+def govern_agent(a, cat_url):
+    cat = connect(cat_url)
+    r = gaccess.register_agent(cat, _gov_scope(a, cat), a.agent, a.scope, a.as_, a.service_principal)
+    print(f"agent {r['agent_id']} registered with scopes {', '.join(r['scopes'])}"
+          + (" (service principal)" if r["service_principal"] else ""))
+    return 0
+
+
+def govern_acl_sync(a, cat_url):
+    cat = connect(cat_url)
+    sc = _gov_scope(a, cat)
+    srcs = cat.query("SELECT * FROM inventory_source WHERE charter_id = ?", (sc.charter_id,))
+    providers = {s["connector"]: gacl.provider_for(s) for s in srcs}
+    _json(gacl.sync(cat, sc, a.as_, providers, a.force, only=a.category))
+    return 0
+
+
+def govern_scan(a, cat_url):
+    cat = connect(cat_url)
+    _json(gpii.scan(cat, _gov_scope(a, cat), a.as_, _gov_cfg(a)))
+    return 0
+
+
+def govern_mask(a, cat_url):
+    cat = connect(cat_url)
+    rep = gpii.build_index(cat, _gov_scope(a, cat), a.as_)
+    _json(rep)
+    return _fail([f"{f['chunk_id']} ({f['item_id']}): {f['reason']}" for f in rep["failed"]]) if rep["failed"] else 0
+
+
+def govern_review(a, cat_url):
+    cat = connect(cat_url)
+    if a.op == "list":
+        for f in gpii.queue(cat, _scope(a, cat)):
+            print(f"{f['finding_id']} {f['entity_type']} {f['score']:.2f} {f['chunk_id']}: …{f['context']}…")
+        return 0
+    f = gpii.review(cat, _gov_scope(a, cat), a.finding, a.op, a.as_, a.reason)
+    print(f"finding {f['finding_id']}: {f['review_state']} (applied on the next 'konmari govern mask')")
+    return 0
+
+
+def govern_label(a, cat_url):
+    cat = connect(cat_url)
+    sc = _gov_scope(a, cat)
+    if a.op == "export":
+        r = gpii.export_sample(cat, sc, a.category, a.output, a.as_, a.size)
+        print(f"wrote {a.output}: sample {r['sample_id']} with {r['size']} item(s) to label")
+        return 0
+    r = gpii.import_labels(cat, sc, a.file, a.as_, _gov_cfg(a))
+    _json({k: r[k] for k in ("sample_id", "policy_id", "sample_size", "recall", "passed", "reasons", "missed")})
+    return 0 if r["passed"] else 1
+
+
+def govern_reidentify(a, cat_url):
+    cat = connect(cat_url)
+    try:
+        values = gpii.reidentify(cat, _scope(a, cat), a.token, a.as_, a.purpose)
+    except gaccess.AccessDenied as e:
+        return _fail(f"refused ({e.reason}); the attempt is recorded in the audit trail")
+    for v in values:
+        print(v)
+    return 0 if values else _fail("no value matches this token")
+
+
+def govern_leak_test(a, cat_url):
+    cat = connect(cat_url)
+    r = ggate.run_leak_suite(cat, _gov_scope(a, cat), ggate.load_suite(Path(a.suite)), a.as_,
+                             prefilter=gaccess.openfga_prefilter(gcfg.load(a.config)))
+    for f in r["failures"]:
+        print(f"LEAK principal {f['principal']} got chunk {f['chunk_id']} (source {f['category_id']})")
+    print(f"leak suite {'passed' if r['passed'] else 'FAILED'}: {r['queries']} queries")
+    return 0 if r["passed"] else 1
+
+
+def _print_status(rows) -> None:
+    for r in rows:
+        extra = f" (policy v{r['policy_version']})" if r["status"] == "approved" else \
+            f": {', '.join(r['reasons'])}"
+        print(f"{r['category_id']}: {r['status']}{extra}" + (" -> exposable" if r["status"] == "approved" else ""))
+
+
+def govern_status(a, cat_url):
+    cat = connect(cat_url)
+    rows = ggate.status(cat, _scope(a, cat))
+    _json(rows) if a.json else _print_status(rows)
+    return 0
+
+
+def govern_check(a, cat_url):
+    cat = connect(cat_url)
+    suite = ggate.load_suite(Path(a.suite)) if a.suite and Path(a.suite).exists() else None
+    r = ggate.check(cat, _gov_scope(a, cat), a.as_, suite, gaccess.openfga_prefilter(gcfg.load(a.config)))
+    if r["leak_suite"]:
+        for f in r["leak_suite"]["failures"]:
+            print(f"LEAK principal {f['principal']} got chunk {f['chunk_id']} (source {f['category_id']})")
+    _print_status(r["sources"])
+    return 0 if all(s["status"] == "approved" for s in r["sources"]) else 1
+
+
+def govern_ropa(a, cat_url):
+    cat = connect(cat_url)
+    doc = grec.ropa_entry(cat, _scope(a, cat), _charter_doc(a) or {}, gcfg.load(a.config))
+    Path(a.output).write_text(dump_yaml(doc), encoding="utf-8")
+    print(f"wrote {a.output}; fill the <FILL> fields and file it with your Art. 30 record")
+    return 0
+
+
+def govern_config(a, cat_url):
+    errs = gcfg.validate(gcfg.load(a.config), _charter_doc(a))
+    if errs:
+        return _fail(errs)
+    print(f"{a.config}: governance configuration is valid")
+    return 0
+
+
 # ---------------------------------------------------------------- parser
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1757,6 +1979,94 @@ def build_parser() -> argparse.ArgumentParser:
     q.add_argument("-o", "--output")
     q = ccmd(gls_, "show", glossary_cmd, "one term with versions, status and links", actor=None)
     q.add_argument("term")
+
+    def gcmd(sub, name, fn, help, actor="required"):
+        q = ccmd(sub, name, fn, help, actor)
+        q.add_argument("--config", default="governance.yaml", help="governance settings (default: governance.yaml)")
+        return q
+
+    au = groups.add_parser("audit", help="the one hash-chained audit trail: verify, export, retention purge")
+    aus = au.add_subparsers(dest="op", required=True)
+    gcmd(aus, "verify", audit_cmd, "recompute the chain over all steps; exit 1 names the first broken event",
+         actor=None)
+    q = gcmd(aus, "export", audit_cmd, "events of a data subject (Art. 15) or a time range, as JSONL or CSV")
+    q.add_argument("--subject", help="user identity or pseudonym token (compliance role)")
+    q.add_argument("--from", dest="from_", help="ISO date/time")
+    q.add_argument("--to", help="ISO date/time")
+    q.add_argument("--format", choices=["jsonl", "csv"], default="jsonl")
+    q.add_argument("-o", "--output", required=True)
+    gcmd(aus, "purge", audit_cmd, "delete events past retention (retention role) and write a checkpoint")
+
+    gv = groups.add_parser("govern", help="governance: source policies, ACLs, PII masking, leak suite, gate")
+    gvs = gv.add_subparsers(dest="cmd", required=True)
+    pol_ = gvs.add_parser("policy", help="versioned source policies per category").add_subparsers(dest="op",
+                                                                                                 required=True)
+    gcmd(pol_, "seed", govern_policy, "one pending draft per in-scope category (inventory sensitivity, owner)")
+    q = gcmd(pol_, "edit", govern_policy, "new pending version; the approved one stays enforced")
+    q.add_argument("policy", help="category ID")
+    q.add_argument("--file", help="YAML with policy fields")
+    q.add_argument("--exposure", choices=gpol.EXPOSURE)
+    q.add_argument("--sensitivity")
+    q.add_argument("--acl-sync-cadence", dest="acl_sync_cadence", help="ISO 8601 duration, e.g. PT24H")
+    q.add_argument("--owner")
+    q.add_argument("--legal-basis", dest="legal_basis", help="Art. 9(2) basis for special-category data")
+    q.add_argument("--tool", action="append", help="permitted tool (repeatable)")
+    q.add_argument("--mask", action="append", metavar="ENTITY=OPERATOR", help="e.g. PERSON=pseudonymize")
+    q.add_argument("--allow", action="append", help="explicit principal for sources without readable ACLs")
+    q.add_argument("--deny", action="append")
+    q.add_argument("--service-principal", action="append", help="autonomous agent granted this source")
+    q.add_argument("--reason")
+    q = gcmd(pol_, "approve", govern_policy, "approve a pending version (data_owner or compliance)")
+    q.add_argument("policy")
+    q.add_argument("--version", type=int, required=True)
+    q.add_argument("--reason")
+    q = gcmd(pol_, "revert", govern_policy, "make an earlier version active again (new approved version)")
+    q.add_argument("policy")
+    q.add_argument("--to", type=int, required=True)
+    q.add_argument("--reason")
+    q = gcmd(pol_, "show", govern_policy, "all versions of one or every policy", actor=None)
+    q.add_argument("policy", nargs="?")
+    q = gcmd(gvs, "grant", govern_grant, "owner-approved write grant for one agent, category and tool")
+    q.add_argument("--agent", required=True)
+    q.add_argument("--category", required=True)
+    q.add_argument("--tool", required=True)
+    q.add_argument("--days", type=int, default=90)
+    q = gcmd(gvs, "agent", govern_agent, "register an agent client with least-privilege scopes")
+    q.add_argument("agent")
+    q.add_argument("--scope", action="append", required=True, help="read:<category> or write:<category>")
+    q.add_argument("--service-principal", action="store_true", help="autonomous agent without a user")
+    q = gcmd(gvs, "acl-sync", govern_acl_sync, "re-read source ACLs when due; apply revocations everywhere")
+    q.add_argument("--force", action="store_true", help="sync now, regardless of the cadence")
+    q.add_argument("--category")
+    gcmd(gvs, "scan", govern_scan, "PII scan of every pilot chunk (findings without values)")
+    gcmd(gvs, "mask", govern_mask, "build the masked agent index from the approved policies")
+    rv_ = gvs.add_parser("review", help="human review of uncertain PII findings").add_subparsers(dest="op",
+                                                                                                required=True)
+    gcmd(rv_, "list", govern_review, "pending findings with context", actor=None)
+    for name in ("confirm", "reject", "revert"):
+        q = gcmd(rv_, name, govern_review, f"{name} a finding (reviewer roles)")
+        q.add_argument("finding")
+        q.add_argument("--reason")
+    lb = gvs.add_parser("label", help="labelled sample for the PII recall gate").add_subparsers(dest="op",
+                                                                                               required=True)
+    q = gcmd(lb, "export", govern_label, "CSV sample to label by hand")
+    q.add_argument("--category", required=True)
+    q.add_argument("--size", type=int, default=200)
+    q.add_argument("-o", "--output", default="pii-labels.csv")
+    q = gcmd(lb, "import", govern_label, "import labels and evaluate recall (exit 1 if the gate fails)")
+    q.add_argument("file")
+    q = gcmd(gvs, "reidentify", govern_reidentify, "resolve a pseudonym token (compliance; audited)")
+    q.add_argument("token")
+    q.add_argument("--purpose", required=True)
+    q = gcmd(gvs, "leak-test", govern_leak_test, "permission leak suite (exit 1 on any unauthorized chunk)")
+    q.add_argument("--suite", default="leak-suite.yaml")
+    q = gcmd(gvs, "status", govern_status, "computed governance status per source", actor=None)
+    q.add_argument("--json", action="store_true")
+    q = gcmd(gvs, "check", govern_check, "heartbeat, leak suite, record the gate status (exit 1 if any blocked)")
+    q.add_argument("--suite", default="leak-suite.yaml")
+    q = gcmd(gvs, "ropa", govern_ropa, "prefilled DSGVO Art. 30 record entry for the pilot agent", actor=None)
+    q.add_argument("-o", "--output", default="ropa-entry.yaml")
+    gcmd(gvs, "config", govern_config, "validate governance.yaml (retention, thresholds)", actor=None)
     return p
 
 
@@ -1766,6 +2076,8 @@ def main(argv=None) -> int:
         return a.fn(a, a.catalog)
     except Refused as e:
         return _fail(e.reasons)
+    except gaccess.AccessDenied as e:
+        return _fail(f"refused with HTTP {e.status}: {e.reason}")
 
     except (OSError, ValueError, yaml.YAMLError) as e:
         return _fail(str(e))

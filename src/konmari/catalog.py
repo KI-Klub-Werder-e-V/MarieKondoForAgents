@@ -6,7 +6,8 @@ import json
 import os
 import re
 import uuid
-from datetime import datetime, timezone
+from contextlib import contextmanager
+from datetime import datetime, timedelta, timezone
 from importlib.resources import files
 from pathlib import Path
 
@@ -45,9 +46,13 @@ class Catalog:
             raise AppendOnlyError(f"{m[3]} is append-only: UPDATE, DELETE and TRUNCATE are refused")
         if self.dialect == "postgres":
             sql = sql.replace("?", "%s")
-        cur = self.conn.cursor()
+        cur = self.cursor()
         cur.execute(sql, params)
         return cur
+
+    def cursor(self):
+        # a DuckDB cursor is a separate connection; inside transaction() all statements use the one connection
+        return self.conn if self.__dict__.get("_tx") and self.dialect == "duckdb" else self.conn.cursor()
 
     def many(self, sql: str, rows: list, chunk: int = 500) -> None:
         """INSERT ... VALUES (?, ...) for many rows, sent as multi-row statements (executemany is slow on DuckDB)."""
@@ -82,8 +87,47 @@ class Catalog:
 
     def rollback(self, name: str) -> None:
         """Undo one migration with its .down.sql file (new tables only; source systems are never touched)."""
-        self.conn.cursor().execute((files("konmari") / "migrations" / name.replace(".sql", ".down.sql")).read_text())
+        mig = files("konmari") / "migrations"
+        extra = mig / name.replace(".sql", f".down.{self.dialect}.sql")
+        if extra.is_file():
+            self.conn.cursor().execute(extra.read_text())
+        self.conn.cursor().execute((mig / name.replace(".sql", ".down.sql")).read_text())
         self.execute("DELETE FROM schema_migration WHERE name = ?", (name,))
+
+    @contextmanager
+    def transaction(self):
+        """One transaction; SET LOCAL settings (principal context, role) end with it."""
+        if self.dialect == "postgres":
+            with self.conn.transaction():
+                yield self
+            return
+        self.conn.execute("BEGIN")
+        self._tx = True
+        try:
+            yield self
+        except BaseException:
+            self.conn.execute("ROLLBACK")
+            raise
+        else:
+            self.conn.execute("COMMIT")
+        finally:
+            self._tx = False
+
+    def ensure_audit_partition(self, ts: datetime) -> None:
+        """Postgres: the monthly audit_event partition for `ts` (c07); a no-op on DuckDB."""
+        month = ts.strftime("%Y_%m")
+        done = self.__dict__.setdefault("_partitions", set())
+        if self.dialect != "postgres" or month in done:
+            return
+        start = ts.replace(day=1).date()
+        end = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
+        cur = self.conn.cursor()
+        cur.execute("SELECT 1 FROM pg_partitioned_table p JOIN pg_class c ON c.oid = p.partrelid"
+                    " WHERE c.relname = 'audit_event'")
+        if cur.fetchone():
+            cur.execute(f"CREATE TABLE IF NOT EXISTS audit_event_{month} PARTITION OF audit_event"
+                        f" FOR VALUES FROM ('{start}') TO ('{end}')")
+        done.add(month)
 
     def close(self) -> None:
         self.conn.close()
@@ -131,6 +175,7 @@ def audit(cat: Catalog, action: str, *, actor: str | None = None, charter_id=Non
            "charter_version": charter_version, "step": step, "result": result,
            "details": json.dumps(details or {}, sort_keys=True, default=str)}
     prev = last["hash"] if last else ""
+    cat.ensure_audit_partition(row["ts"])
     cat.execute(
         "INSERT INTO audit_event (id, ts, actor, action, charter_id, charter_version, step, result, details, seq,"
         " prev_hash, hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -139,13 +184,31 @@ def audit(cat: Catalog, action: str, *, actor: str | None = None, charter_id=Non
 
 
 def verify_chain(cat: Catalog) -> dict | None:
-    """The first chained event whose hash, predecessor or position no longer matches, or None if the chain holds."""
+    """The first chained event whose hash, predecessor or position no longer matches, or None if the chain holds.
+    A purge leaves a checkpoint event (c07): the chain then starts after the checkpoint's last purged event.
+    Events written before the chain existed are covered by `audit.adopt` events holding their hashes."""
+    rows = cat.query("SELECT * FROM audit_event WHERE seq IS NOT NULL ORDER BY seq")
+    details = {r["id"]: json.loads(r["details"] or "{}") for r in rows
+               if r["action"] in ("audit.checkpoint", "audit.adopt")}
+    checkpoints = {d["to_seq"]: d for i, d in details.items() if "to_seq" in d}
     prev, seq = "", 0
-    for r in cat.query("SELECT * FROM audit_event WHERE seq IS NOT NULL ORDER BY seq"):
+    if rows and rows[0]["seq"] != 1:
+        cp = checkpoints.get(rows[0]["seq"] - 1)
+        if cp is None:
+            return rows[0]
+        prev, seq = cp["last_hash"], cp["to_seq"]
+    for r in rows:
         seq += 1
         if r["seq"] != seq or r["prev_hash"] != prev or r["hash"] != event_hash(prev, r):
             return r
         prev = r["hash"]
+    legacy = {r["id"]: r for r in cat.query("SELECT * FROM audit_event WHERE seq IS NULL")}
+    purged = {i for cp in checkpoints.values() for i in cp.get("legacy_ids", [])}
+    for r in rows:
+        if r["action"] == "audit.adopt":
+            for eid, h in details[r["id"]]["events"].items():
+                if eid in legacy and event_hash("", legacy[eid]) != h or eid not in legacy and eid not in purged:
+                    return legacy.get(eid, r)
     return None
 
 

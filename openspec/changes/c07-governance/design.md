@@ -72,6 +72,12 @@ Six months mirrors AI Act Art. 26(6) (S24, S25), even though most pilots are not
 - [Hash chain gives tamper evidence, not tamper proof, against a DB superuser] → document it; optional periodic anchor export of the latest hash to an external store.
 - [Regulatory timelines shift (Digital Omnibus)] → obligations are configured as flags (high-risk yes/no), not hard-coded dates; the Art. 4/50 checklist is kept in docs.
 
+## Implementation notes
+
+- RLS benchmark (task 5.5, `tests/test_access_control.py::test_rls_benchmark_uses_principal_index`): `EXPLAIN ANALYZE` of the agent-role query under `FORCE ROW LEVEL SECURITY` on 5 000 synthetic chunks with 50 groups, Postgres 16 local: p95 0.9 ms, median 0.8 ms (30 runs). pgvector was not installed in the test environment, so the ANN part of the query is not in this number; measure it again with pgvector on the real pilot sample in c08/c09.
+- A governance "source" is one in-scope category (the spec allows "source or category"); `governance_status` and `exposable()` are keyed by category ID.
+- Re-identification uses no reverse map (ROADMAP default): the token is matched against the HMAC of the detected spans in the original chunk store, which no agent identity can read.
+
 ## Migration Plan
 
 New capability, nothing to migrate. Rollout per pilot: (1) run migrations, which create tables, RLS policies and roles; (2) backfill ACLs for existing chunks from 06, where chunks without ACL stay blocked; (3) PII scan + labelled sample + gate; (4) owner approval of source policies; (5) leak suite; (6) the gate opens for 08. Rollback: disable exposure (sources revert to `blocked`). RLS and audit stay on; removing them is not a supported rollback.

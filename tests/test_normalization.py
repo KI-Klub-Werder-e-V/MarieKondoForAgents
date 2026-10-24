@@ -132,7 +132,8 @@ def test_discarded_records_are_not_normalized(cat, tmp_path):
     from konmari.catalog import now
 
     ts = now()
-    cat.execute("INSERT INTO corpus_item VALUES ('crm:K-2', 'manual://crm', 'x', 't', 'r', NULL, '{}', 'archived', ?,"
+    cat.execute("INSERT INTO corpus_item (item_id, asset_uri, charter_id, title, content_ref, text_ref, meta, state,"
+                " state_changed_at, restricted_until, masked_ref, first_seen, last_seen) VALUES ('crm:K-2', 'manual://crm', 'x', 't', 'r', NULL, '{}', 'archived', ?,"
                 " NULL, NULL, ?, ?)", (ts, ts, ts))
     rec, specs = write_mini(tmp_path / "m", [
         {"source": "crm", "object": "kontakt", "record_id": f"K-{i}", "values": {"geburtstag": "01.04.2025"}}

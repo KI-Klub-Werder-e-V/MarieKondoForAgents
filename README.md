@@ -99,9 +99,22 @@ konmari glossary stewards --steward <id> --as <id>  # dann glossary add|submit|a
 konmari glossary export --format skos -o glossar.ttl   # nur freigegebene Begriffe (auch: --format json, report)
 ```
 
-Für die Personendaten-Hinweise einmal das Sprachmodell laden: `uv run python -m spacy download de_core_news_lg`. SMB-Ablagen: `uv sync --extra smb`. Semantische Dubletten: `uv sync --extra semantic`, S3-Archiv: `uv sync --extra s3`, Docling-Parser: `uv sync --extra docling`.
+Schritt 7, Absichern (Anleitung: [docs/govern-guide.de.md](docs/govern-guide.de.md)):
 
-Der Katalog liegt standardmäßig in `.konmari/catalog.duckdb`. Für Postgres 16: `uv sync --extra postgres` und `KONMARI_CATALOG=postgresql://...` oder `--catalog`. Schnittstelle für spätere Changes: [docs/gate-contract.md](docs/gate-contract.md), [docs/enrich-contract.md](docs/enrich-contract.md). Tests: `uv run pytest -q`.
+```
+konmari govern policy seed --as <id>                # Quellen-Richtlinie je Kategorie, dann policy edit|approve|revert|show
+konmari govern agent <agent> --scope read:<kategorie> --as <id>   # Agent mit kleinsten Rechten (auch: govern grant)
+konmari govern acl-sync --as <id>                   # Berechtigungen aus den Quellen, Entzug wirkt überall
+konmari govern scan --as <id>                       # Personendaten finden (dann review list|confirm|reject|revert)
+konmari govern label export --category <kategorie> --as <id>   # Muster auszeichnen, dann label import <datei> --as <id>
+konmari govern mask --as <id>                       # maskierter Agenten-Index (auch: govern reidentify, nur compliance)
+konmari govern check --as <id>                      # Leck-Test und Freigabe je Quelle (auch: leak-test, status, ropa)
+konmari audit verify                                # ein Prüfprotokoll für alle Schritte (auch: export, purge)
+```
+
+Für die Personendaten-Hinweise einmal die Sprachmodelle laden: `uv run python -m spacy download de_core_news_lg` (Schritt 7 zusätzlich `en_core_web_lg`). SMB-Ablagen: `uv sync --extra smb`. Semantische Dubletten: `uv sync --extra semantic`, S3-Archiv: `uv sync --extra s3`, Docling-Parser: `uv sync --extra docling`.
+
+Der Katalog liegt standardmäßig in `.konmari/catalog.duckdb`. Für Postgres 16: `uv sync --extra postgres` und `KONMARI_CATALOG=postgresql://...` oder `--catalog`. Schnittstelle für spätere Changes: [docs/gate-contract.md](docs/gate-contract.md), [docs/enrich-contract.md](docs/enrich-contract.md), [docs/governance-contract.md](docs/governance-contract.md). Tests: `uv run pytest -q`.
 
 Die Changes werden der Reihe nach umgesetzt, beginnend mit `c01-pilot-charter`:
 

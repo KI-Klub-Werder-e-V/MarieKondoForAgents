@@ -120,7 +120,12 @@ def build(cat: Catalog, sc: Scope | None, entity: str, actor: str, exposed: dict
     cf.sync(cat, sc, entity, results, pol["doc"], actor)
     rows = _attributes(cat, entity, results, pol["version"])
     cat.execute("DELETE FROM golden_attribute WHERE entity = ?", (entity,))
-    cat.many("INSERT INTO golden_attribute VALUES (" + ", ".join("?" * 14) + ")", [tuple(r.values()) for r in rows])
+    if rows:
+        cat.many(f"INSERT INTO golden_attribute ({', '.join(rows[0])}) VALUES (" + ", ".join("?" * len(rows[0])) + ")",
+                 [tuple(r.values()) for r in rows])
+    from konmari.governance import acl  # c07: records inherit the ACL of their source policy
+
+    acl.propagate_records(cat, entity)
     columns = {}
     for r in rows:
         if r["source_field"]:

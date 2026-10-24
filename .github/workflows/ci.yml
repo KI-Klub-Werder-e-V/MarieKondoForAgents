@@ -30,5 +30,6 @@ jobs:
           go install github.com/minio/minio@latest
           MINIO_ROOT_USER=konmari MINIO_ROOT_PASSWORD=konmari-ci-only nohup "$(go env GOPATH)/bin/minio" server /tmp/minio-data --address :9000 > /tmp/minio.log 2>&1 &
           for i in $(seq 60); do curl -sf http://localhost:9000/minio/health/live && echo "KONMARI_TEST_S3_URL=http://localhost:9000" >> "$GITHUB_ENV" && break; sleep 1; done
+      # includes the c07 leak suite and governance gate tests (DuckDB and the Postgres service: RLS, roles)
       - run: uv run pytest -q
       - run: npx -y @fission-ai/openspec@1.6.0 validate --all --strict

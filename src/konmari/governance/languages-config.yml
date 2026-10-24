@@ -1,0 +1,22 @@
+# Presidio NLP engine configuration (NlpEngineProvider format) plus German and English context words.
+# Model names can be overridden with KONMARI_NLP_MODEL (de) and KONMARI_NLP_MODEL_EN (en).
+# Install once: uv run python -m spacy download de_core_news_lg && uv run python -m spacy download en_core_web_lg
+nlp_engine_name: spacy
+models:
+  - lang_code: de
+    model_name: de_core_news_lg
+  - lang_code: en
+    model_name: en_core_web_lg
+context:
+  de:
+    IBAN_CODE: [iban, konto, kontonummer, bankverbindung, überweisung, lastschrift]
+    PHONE_NUMBER: [telefon, tel, handy, mobil, rufnummer, fax, erreichbar]
+    EMAIL_ADDRESS: [e-mail, email, mail]
+    DE_TAX_ID: [steuer-id, steueridentifikationsnummer, idnr, identifikationsnummer]
+    DE_PLZ_ORT: [anschrift, adresse, wohnort, wohnhaft, straße, str]
+    PERSON: [frau, herr, herrn, kunde, kundin, mitglied, name]
+  en:
+    IBAN_CODE: [iban, account, bank]
+    PHONE_NUMBER: [phone, tel, mobile, call]
+    EMAIL_ADDRESS: [email, e-mail, mail]
+    PERSON: [mr, mrs, ms, customer, member, name]

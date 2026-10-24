@@ -220,6 +220,10 @@ class _Run:
 
     def acl_for(self, key, item, asset):
         """One ACL lookup per item or table per run; (tags | None, stale)."""
+        if key not in self.acl_cache and item and item.get("acl_status") in ("known", "policy"):
+            # c07 captured this item's ACL: acl_tags are filled from it (one capture implementation)
+            self.acl_cache[key] = ({"allow": list(item["allowed_principals"]),
+                                    "deny": list(item["denied_principals"] or [])}, False)
         if key not in self.acl_cache:
             fn = self.acl.get(_connector(self.cat, asset.get("source_id")), self.acl.get("*", manifest_acl))
             try:

@@ -12,6 +12,7 @@ from konmari.charter.store import Scope
 from konmari.chunking import chunker as ck
 from konmari.chunking.parse import ParseError, parse
 from konmari.discard import corpus
+from konmari.governance import acl
 from konmari.scorecard.probes import record_evidence
 from konmari.versions import Refused
 
@@ -178,11 +179,15 @@ def run(cat: Catalog, sc: Scope, actor: str, dry_run: bool = False) -> dict:
     for it, ver, status, err, chunks in sets:
         for pos, c in enumerate(chunks):
             if cat.one("SELECT chunk_id FROM chunk WHERE chunk_id = ?", (c["chunk_id"],)) is None:
-                cat.execute("INSERT INTO chunk VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'inactive', NULL, ?)",
+                cat.execute("INSERT INTO chunk (chunk_id, item_id, source_version, first_run, heading_path, ordinal,"
+                            " kind, method, content, content_hash, tokens, location, position, status, superseded_by,"
+                            " created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'inactive', NULL, ?)",
                             (c["chunk_id"], it["item_id"], ver, run_id,
                              json.dumps(c["heading_path"], ensure_ascii=False), c["ordinal"], c["kind"], c["method"],
                              c["content"], c["content_hash"], c["tokens"], json.dumps(c["loc"]), pos, t))
                 corpus.register_derived(cat, it["item_id"], c["chunk_id"], "chunk")
+        if chunks:
+            acl.propagate(cat, it["item_id"])  # c07: new chunks carry the parent item's ACL
         cat.execute("INSERT INTO chunk_set VALUES (?, ?, ?, ?, ?, ?, ?)",
                     (run_id, it["item_id"], ver, status, err, json.dumps([c["chunk_id"] for c in chunks]), t))
         _apply(cat, it["item_id"], "superseded")

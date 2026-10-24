@@ -105,13 +105,16 @@ def blank_nlp_model(tmp_path_factory):
 
     d = tmp_path_factory.mktemp("nlp") / "de_blank"
     spacy.blank("de").to_disk(d)
-    old = os.environ.get("KONMARI_NLP_MODEL")
-    os.environ["KONMARI_NLP_MODEL"] = str(d)
+    en = d.parent / "en_blank"
+    spacy.blank("en").to_disk(en)
+    old = {k: os.environ.get(k) for k in ("KONMARI_NLP_MODEL", "KONMARI_NLP_MODEL_EN")}
+    os.environ["KONMARI_NLP_MODEL"], os.environ["KONMARI_NLP_MODEL_EN"] = str(d), str(en)
     yield str(d)
-    if old is None:
-        os.environ.pop("KONMARI_NLP_MODEL", None)
-    else:
-        os.environ["KONMARI_NLP_MODEL"] = old
+    for k, v in old.items():
+        if v is None:
+            os.environ.pop(k, None)
+        else:
+            os.environ[k] = v
 
 
 SP_SITE = "contoso.sharepoint.com/sites/support"
@@ -386,3 +389,29 @@ def c06(dp):
     fx.register(dp["cat"], manifest)
     fx.ready_for_enrich(dp["cat"])
     return {**dp, "files": files, "manifest": manifest, "sc": scope(fx.CHARTER, dp["cat"])}
+
+
+# ---------------------------------------------------------------- c07 fixtures
+
+@pytest.fixture(params=["duckdb", pytest.param("postgres", marks=pytest.mark.postgres)])
+def gcat(request, tmp_path):
+    """A fresh catalog on DuckDB and, where available, on Postgres 16 (same migrations)."""
+    url = request.getfixturevalue("pg_url") if request.param == "postgres" else f"duckdb:///{tmp_path}/gov.duckdb"
+    c = connect(url)
+    yield c
+    c.close()
+
+
+@pytest.fixture(scope="session")
+def spans():
+    """In-memory OpenTelemetry exporter (the SDK is a dev dependency; the kit itself uses the API only)."""
+    from opentelemetry import trace
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+    exp = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exp))
+    trace.set_tracer_provider(provider)
+    return exp
