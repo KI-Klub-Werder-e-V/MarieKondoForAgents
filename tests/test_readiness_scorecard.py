@@ -143,9 +143,14 @@ def test_published_rubric_cannot_be_edited(tmp_path):
     doc = rb.load()
     rb.publish(cat, doc, "maintainer")
     rb.publish(cat, doc, "maintainer")  # identical content: no-op
+    descr = json.loads(json.dumps(doc))
+    descr["criteria"][0]["levels"]["2"] = "changed descriptor"
+    with pytest.raises(rb.RubricImmutable, match="new rubric_version"):
+        rb.publish(cat, descr, "maintainer")
     doc["criteria"][1]["gate"] = True
     with pytest.raises(rb.RubricImmutable, match="new rubric_version"):
         rb.publish(cat, doc, "maintainer")
+    assert rb.get(cat, "konmari-joy-1")["doc"] == rb.load()
     with pytest.raises(AppendOnlyError):
         cat.execute("UPDATE rubric_version SET content = '{}'")
     doc["rubric_version"] = "konmari-joy-2"
@@ -154,10 +159,13 @@ def test_published_rubric_cannot_be_edited(tmp_path):
 
 def test_default_rubric_is_available(joy):
     cat = joy["setup"]([asset()])
-    se.score(cat, actor="ben")
+    out = joy["ok"]("score", "--as", "ben")
+    assert "rubric konmari-joy-1" in out
     row = rb.get(cat, "konmari-joy-1")
     assert row and rb.gates(row["doc"]) == {"authoritative_current", "permissions_explicit"}
-    assert len(row["doc"]["criteria"]) == 6
+    assert [c["id"] for c in row["doc"]["criteria"]] == CRIT
+    assert all(all(c["levels"][k].strip() for k in "0123") for c in row["doc"]["criteria"])
+    assert cat.one("SELECT rubric_version FROM scorecard_run")["rubric_version"] == "konmari-joy-1"
 
 
 def test_scores_reference_rubric_version(joy):
