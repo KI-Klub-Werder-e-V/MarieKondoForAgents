@@ -14,6 +14,13 @@ context: |
   `konmari`, Postgres as the readiness catalog (DuckDB allowed for local runs), connectors for
   SharePoint/M365, CRMs, file shares and SQL warehouses, MCP servers as the agent interface,
   OpenLineage-style lineage events. Every pipeline step writes auditable decisions to the catalog.
+  Defaults for open ROADMAP questions (2026-10-24, revisit after first pilot):
+  identity = generic OIDC (Keycloak/Authentik reference, RFC 8693 token exchange; Entra ID via the
+  same OIDC interface); judge/embedding models = self-hosted by default behind a provider interface
+  (hosted API with DPA allowed via config), multilingual embedding model configurable; v1 CRM
+  connectors = CSV import plus one generic REST adapter; MIP labels only inform the sensitivity tier;
+  review = CLI only in v1; c05 conflict tickets = CSV export plus GitHub issues adapter;
+  pseudonymisation keeps only the HMAC key (no reverse lookup table).
   Change order follows the KonMari sequence: 01 pilot charter → 09 evaluation & monitoring.
 
 # Project context (optional)
