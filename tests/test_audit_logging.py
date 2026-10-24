@@ -41,7 +41,9 @@ def test_allowed_retrieval(gcat):
     sc, ctx = _support_pilot(gcat)
     hits = access.retrieve(gcat, ctx, "Wie melde ich Sportart an", k=5)
     assert len(hits) == 5
-    ev = events(gcat, "agent.tool_call")[-1]
+    evs = events(gcat, "agent.tool_call")
+    assert len(evs) == 1  # one event per retrieval
+    ev = evs[0]
     d = ev["details"]
     assert (ev["actor"], d["on_behalf_of"], d["tool"], d["operation"], d["decision"]) == \
         ("faq-bot", "finn", "search", "read", "allow")
