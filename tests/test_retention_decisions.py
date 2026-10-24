@@ -449,6 +449,14 @@ def test_erasure_executed_after_waiting_period(dp):
     assert set(er) == {"item_id", "charter_id", "category_id", "rule_id", "approvers", "erased_at", "open_actions"}
 
 
+def test_erased_item_does_not_reenter_corpus_on_redetect(dp):
+    sc, p, _ = _erased(dp)
+    cat = dp["cat"]
+    ddet.detect(cat, actor="dirk", manifest=dp["manifest"])  # the source copy is still listed in the manifest
+    assert corpus.get(cat, p["item_id"]) is None
+    assert not cat.query("SELECT * FROM fingerprint WHERE item_id = ?", (p["item_id"],))
+
+
 def test_erasure_of_archived_item_deletes_archive_copy(dp):
     _rule(dp, "kb-and-sops", "P1Y", "last-entry")
     detect(dp, [item("manual://kb/sops", "a.txt", "Satzung alt", last_entry="2015-01-01"),

@@ -94,8 +94,11 @@ def collect(cat: Catalog, sc: Scope, manifest: str | Path | None = None) -> tupl
 
 
 def sync(cat: Catalog, sc: Scope, items: list[dict]) -> list[dict]:
-    """Register new items as active and refresh metadata of known ones; returns the catalog rows."""
+    """Register new items as active and refresh metadata of known ones; returns the catalog rows.
+    Erased items stay out even while their source copy still exists (deleting it is the source owner's open action)."""
     t = now()
+    erased = {r["item_id"] for r in cat.query("SELECT item_id FROM erasure_record")}
+    items = [it for it in items if it["item_id"] not in erased]
     for it in items:
         row = cat.one("SELECT state FROM corpus_item WHERE item_id = ?", (it["item_id"],))
         if row is None:
