@@ -350,8 +350,8 @@ def test_scorecard_updated(c09):
     from konmari.scorecard import probes as sp
 
     cat = c09["cat"]
-    asset(cat, "sql://crm/contacts", age_days=20)
-    asset(cat, "sql://crm/fresh", age_days=1)
+    asset(cat, "sql://crm/contacts", age_days=20, at=now())
+    asset(cat, "sql://crm/fresh", age_days=1, at=now())
     rep, _ = monitor(c09, now())
     rows = {r["asset_uri"]: r for r in cat.query("SELECT * FROM asset_evidence WHERE kind = 'freshness_alert'")}
     assert json.loads(rows["sql://crm/contacts"]["payload"]) == {"status": "error"}
