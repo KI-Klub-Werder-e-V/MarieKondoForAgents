@@ -1,0 +1,12 @@
+{
+  "name": "konmari-kit",
+  "description": "KonMari-Kit by KI Klub Werder e.V.: tidy your organization's data for AI agents.",
+  "owner": { "name": "KI Klub Werder e.V." },
+  "plugins": [
+    {
+      "name": "konmari",
+      "source": "./",
+      "description": "Claude drives the KonMari-Kit CLI to make one pilot use case's data agent-ready; humans approve every decision."
+    }
+  ]
+}

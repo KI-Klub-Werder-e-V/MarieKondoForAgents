@@ -11,10 +11,10 @@
 
 ## 3. Skill and plugin
 
-- [ ] 3.1 Write `skills/konmari/SKILL.md` (setup, loop, approval protocol, no invented values, data stays local, stop and resume)
-- [ ] 3.2 Write `skills/konmari/references/01-charter.md` … `09-evaluate.md` and `connect-agent.md`
-- [ ] 3.3 Add `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (no MCP server)
-- [ ] 3.4 Guard test `tests/test_skill_commands.py`; tests: Every documented command exists in the CLI, Plugin manifests and frontmatter are valid, Skill states the approval protocol, Wheel contains the CLI and its data files
+- [x] 3.1 Write `skills/konmari/SKILL.md` (setup, loop, approval protocol, no invented values, data stays local, stop and resume)
+- [x] 3.2 Write `skills/konmari/references/01-charter.md` … `09-evaluate.md` and `connect-agent.md`
+- [x] 3.3 Add `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (no MCP server)
+- [x] 3.4 Guard test `tests/test_skill_commands.py`; tests: Every documented command exists in the CLI, Plugin manifests and frontmatter are valid, Skill states the approval protocol, Wheel contains the CLI and its data files
 
 ## 4. Install path and docs
 
