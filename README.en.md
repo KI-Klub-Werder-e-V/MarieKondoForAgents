@@ -76,7 +76,26 @@ haven't discarded yet.
 Categories are tackled in order of risk: the public FAQ first, contracts later, anything with
 special-category personal data (GDPR Art. 9) last.
 
-## Quick start
+## With Claude Code (recommended)
+
+The easiest way to tidy is with [Claude Code](https://code.claude.com/). The `konmari` skill
+operates the kit for you: it runs the charter interview, registers sources, runs scans and checks,
+reads the reports and explains them in plain words. The people your charter names still make every
+decision. Before each approval Claude shows what it is about and asks.
+
+```
+/plugin marketplace add KI-Klub-Werder-e-V/MarieKondoFuerAgenten
+/plugin install konmari@konmari-kit
+```
+
+Then, in an empty folder for your pilot, just say what you want, for example:
+
+> Tidy our data for an FAQ agent for the club office.
+
+You need Python 3.12 and [uv](https://docs.astral.sh/uv/). How the skill and the CLI divide the
+work: [`docs/agents.md`](docs/agents.md).
+
+## Quick start on the command line
 
 You need Python 3.12 and [uv](https://docs.astral.sh/uv/). The example is a fictional sports
 club with an FAQ assistant for its office.
@@ -128,8 +147,7 @@ walkthrough continues in the [guide](docs/guide.en.md). Every command at a glanc
 - volunteers, IT leads and consultants guiding such a project
 - anyone who needs to know, and prove, which data their agent can see
 
-It runs on the command line. Approvals need no programming skills, but someone has to run the
-commands.
+You work with Claude Code or directly on the command line. Approvals need no programming skills.
 
 ## Try it and share your experience
 

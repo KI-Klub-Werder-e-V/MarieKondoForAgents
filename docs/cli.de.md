@@ -9,6 +9,13 @@ uv sync
 uv run konmari --help
 ```
 
+Wo stehen wir, was ist als Nächstes dran (nur lesend; Grundlage des Claude-Code-Skills, siehe [docs/agents.md](agents.md)):
+
+```
+konmari next                                        # Stand von Charta, Kennzahlen, Kategorien und der nächste Befehl
+konmari next --json                                 # dasselbe maschinenlesbar
+```
+
 Schritt 1, Pilot-Charta (Anleitung: [docs/guide.de.md](guide.de.md), Beispiel: `examples/verein-faq-assistant/`):
 
 ```

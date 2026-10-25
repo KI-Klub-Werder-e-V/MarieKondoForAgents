@@ -31,16 +31,21 @@ The catalog defaults to `.konmari/catalog.duckdb`; set `KONMARI_CATALOG=postgres
 - PII detection runs locally. No real personal data in tests, fixtures or examples.
 - External systems (SharePoint, CRMs, models) sit behind a small interface with a fake adapter;
   tests never call real services.
+- Every `konmari …` command in `skills/**/*.md` and `docs/cli.de.md` must exist in the parser
+  (`tests/test_skill_commands.py`). `konmari next` stays read-only: no audit events, no writes.
 - Thresholds are named, versioned config values with a source or an "assumption" note in
   `research/`.
 
 ## Layout
 
 ```
-src/konmari/     CLI and one package per step (charter, inventory, categories, scorecard, discard, …)
+src/konmari/     CLI and one package per step (charter, inventory, categories, scorecard, discard, …);
+                 guided.py is `konmari next`, the read-only "where are we, what's next" report
+skills/konmari/  Claude Code skill that operates the CLI (SKILL.md plus references/ per step)
+.claude-plugin/  plugin.json and marketplace.json: the repo root is the plugin
 tests/           pytest, one file per capability, tests named after spec scenarios
 docs/            guides per step (de/en) and contracts between steps
 examples/        fictional pilot (verein-faq-assistant)
-openspec/        config, ROADMAP and the nine changes
+openspec/        config, ROADMAP, the nine step changes and c10-agent-skill
 research/        source brief and research notes with sources
 ```

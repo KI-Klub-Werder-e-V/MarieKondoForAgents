@@ -18,6 +18,8 @@ Nine OpenSpec changes, applied in order. Each one maps to a KonMari rule and a s
 
 \* Our own estimate for one experienced developer, from the task counts (31–46 tasks per change). It is not a measured value.
 
+After the nine steps, `c10-agent-skill` adds the operator layer: `konmari next` (read-only state and next command) and a Claude Code skill and plugin that drive the CLI, with humans approving every decision. Capabilities `guided-operation`, `agent-skill`; depends on c01–c09.
+
 `c03` is re-run after each later step (fix items close, `c09` monitoring feeds currentness), so the scorecard is a loop, not a single pass.
 
 ## Coverage matrix (source brief → requirements)

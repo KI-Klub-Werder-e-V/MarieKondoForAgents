@@ -18,5 +18,5 @@
 
 ## 4. Install path and docs
 
-- [ ] 4.1 Verify `uv build` and `uvx --from <path> konmari --help`; fix pyproject if needed
-- [ ] 4.2 README.md and README.en.md: "Mit Claude Code (empfohlen)" before the CLI quick start; add `docs/agents.md`; update AGENTS.md layout and the ROADMAP
+- [x] 4.1 Verify `uv build` and `uvx --from <path> konmari --help`; fix pyproject if needed
+- [x] 4.2 README.md and README.en.md: "Mit Claude Code (empfohlen)" before the CLI quick start; add `docs/agents.md`; update AGENTS.md layout and the ROADMAP

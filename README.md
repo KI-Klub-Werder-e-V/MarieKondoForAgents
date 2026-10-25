@@ -76,7 +76,27 @@ lässt euch also nicht anreichern, was ihr noch nicht aussortiert habt.
 Die Reihenfolge der Kategorien folgt dem Risiko: erst die öffentliche FAQ, dann die Verträge,
 ganz zum Schluss alles mit besonders schützenswerten Daten nach Art. 9 DSGVO.
 
-## Schnellstart
+## Mit Claude Code (empfohlen)
+
+Am einfachsten räumt ihr mit [Claude Code](https://code.claude.com/) auf. Der Skill `konmari`
+bedient das Kit für euch: Er führt das Gespräch für die Pilot-Charta, registriert Quellen, lässt
+Scans und Prüfungen laufen, liest die Berichte und erklärt sie in einfachen Worten. Entscheiden
+tun weiterhin die Personen, die eure Charta nennt. Vor jeder Freigabe zeigt Claude, worum es geht,
+und fragt nach.
+
+```
+/plugin marketplace add KI-Klub-Werder-e-V/MarieKondoFuerAgenten
+/plugin install konmari@konmari-kit
+```
+
+Dann in einem leeren Ordner für euren Piloten einfach sagen, worum es geht, zum Beispiel:
+
+> Räum unsere Daten für einen FAQ-Agenten in der Geschäftsstelle auf.
+
+Voraussetzungen: Python 3.12 und [uv](https://docs.astral.sh/uv/). Wie Skill und Kommandozeile
+zusammenarbeiten, steht in [`docs/agents.md`](docs/agents.md).
+
+## Schnellstart auf der Kommandozeile
 
 Voraussetzungen: Python 3.12 und [uv](https://docs.astral.sh/uv/). Das Beispiel ist ein
 erfundener Sportverein mit einem FAQ-Assistenten für die Geschäftsstelle.
@@ -128,8 +148,8 @@ etwas gebracht hat. Wie es weitergeht, steht Schritt für Schritt in der
 - Freiwillige, IT-Verantwortliche und Berater:innen, die so ein Projekt begleiten
 - alle, die vorher wissen wollen, welche Daten der Agent sieht, und das belegen müssen
 
-Gearbeitet wird auf der Kommandozeile. Für die Freigaben braucht es keine Programmierkenntnisse,
-aber jemanden, der die Befehle ausführt.
+Gearbeitet wird mit Claude Code oder direkt auf der Kommandozeile. Für die Freigaben braucht es
+keine Programmierkenntnisse.
 
 ## Ausprobieren und Erfahrungen teilen
 
@@ -163,6 +183,7 @@ Echte personenbezogene Daten gehören nie ins Repository.
 |---|---|
 | Anleitung Schritt für Schritt | [`docs/guide.de.md`](docs/guide.de.md) und die `*-guide.de.md` je Schritt |
 | Alle Befehle | [`docs/cli.de.md`](docs/cli.de.md) |
+| Mit Claude Code arbeiten | [`docs/agents.md`](docs/agents.md), Skill in [`skills/konmari/`](skills/konmari/) |
 | Roadmap, Abdeckung, gemeinsames Vokabular | [`openspec/ROADMAP.md`](openspec/ROADMAP.md) |
 | Anforderungen und Entwurf je Schritt | [`openspec/changes/`](openspec/changes/) |
 | Recherche mit Quellen | [`research/`](research/) |
