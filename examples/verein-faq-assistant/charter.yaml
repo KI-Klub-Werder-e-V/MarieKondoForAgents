@@ -64,7 +64,7 @@ cadence:
 
 data_scope:
   sources:
-    - {id: office-share, connector: fileshare, locator: "smb://nas.example.org/office/faq", categories: [kb-and-sops]}
+    - {id: office-share, connector: fileshare, locator: "exports/faq", categories: [kb-and-sops]}
     - {id: fee-rules, connector: csv-import, locator: exports/fee-rules.csv, categories: [policies-and-contracts]}
   category_extensions: []
   categories:

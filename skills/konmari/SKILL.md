@@ -37,8 +37,12 @@ what it means for the agent, what the user has to decide.
    `<you>` in legwork commands. If they are not in the register yet, they are added while drafting
    the charter.
 4. To learn the steps on fictional data first, copy `examples/verein-faq-assistant/` from the
-   repository into a temp folder and run the loop there. Its `office-share` source is a fictional SMB
-   share, so the inventory stops at that scan; `fee-rules` (csv-import) imports fine.
+   repository into a temp folder and run the loop there. Its `office-share` source is the local
+   folder `exports/faq/` (a few fictional FAQ pages, one of them a duplicate), `fee-rules` is a CSV export.
+5. Scans detect personal data locally with spaCy. Before the first scan install a German model once:
+   `de_core_news_lg` for real pilots, or the small `de_core_news_sm` for trials (then set
+   `KONMARI_NLP_MODEL=de_core_news_sm`). Install with `uv run --project <clone> python -m spacy download <model>`.
+   Ask before downloading the large model (about 500 MB).
 
 ## The loop
 
@@ -87,6 +91,10 @@ any other command that records a decision for a person) run **only** when all of
 3. The `--as` value is exactly the stakeholder the charter names. Never pick another approver,
    never use an ID the charter does not contain, never put the user's ID where the charter names
    someone else.
+
+An explicit statement like "I am Ben" (or "I am Anna and Ben") settles who the user is; small
+organisations often have one person in several roles, so do not question it because the charter
+lists separate people. Still confirm each decision.
 
 Never infer consent from silence, from an earlier "go ahead", or from the user asking you to
 "just do everything". Never batch approvals silently: list each decision (or each bulk command

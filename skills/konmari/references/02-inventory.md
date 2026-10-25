@@ -48,5 +48,5 @@ konmari categories handoff
 - Credentials: ask IT for a read-only account; the user exports the secret
   (`export CRM_DB_PASSWORD=...`) and you pass `--secret-ref env:CRM_DB_PASSWORD`. SharePoint needs
   an Entra app with `Sites.Selected` only.
-- Missing spaCy model: `uv run python -m spacy download de_core_news_lg`.
+- Missing spaCy model: `uv run python -m spacy download de_core_news_lg` (or `de_core_news_sm` with `KONMARI_NLP_MODEL=de_core_news_sm` for trials).
 - Owner unknown: ask the user who maintains it; a team is not an owner.

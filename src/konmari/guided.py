@@ -271,7 +271,7 @@ def _categories(cat, sc) -> tuple[str, list[dict]]:
     for c in seq:
         rows.append({"category": c, "assets": len(cats.members(cat, sc, c, accepted_only=True)),
                      "steps": {s: cats.step_status(cat, sc.charter_id, c, s)["status"] for s in STEPS}})
-    return (f"approved v{order['version']}" if order else "charter (not approved)"), rows
+    return (f"approved v{order['version']}" if order else "proposed, not yet approved"), rows
 
 
 def _step(cat, sc, base, step, c, status) -> dict:
