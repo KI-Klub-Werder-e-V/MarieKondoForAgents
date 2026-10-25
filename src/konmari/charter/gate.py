@@ -21,7 +21,8 @@ class GateResult:
     unmet: list[str] = field(default_factory=list)
 
 
-def gate(step: str, charter_path="charter.yaml", catalog: Catalog | None = None, actor: str | None = None) -> GateResult:
+def check(step: str, charter_path="charter.yaml", catalog: Catalog | None = None) -> GateResult:
+    """The gate conditions without the audit event (for read-only callers such as `konmari next`)."""
     if step not in STEPS:
         raise ValueError(f"unknown step '{step}'; valid steps: {', '.join(STEPS)}")
     cat = catalog or connect()
@@ -57,7 +58,13 @@ def gate(step: str, charter_path="charter.yaml", catalog: Catalog | None = None,
                 unmet.append(f"metrics: must_have metric '{m['id']}' has no baseline"
                              + (" value (planned baselines only allow the inventory step)" if base else
                                 " or measurement plan"))
-    res = GateResult(not unmet, step, cid, ver, msv, unmet)
+    return GateResult(not unmet, step, cid, ver, msv, unmet)
+
+
+def gate(step: str, charter_path="charter.yaml", catalog: Catalog | None = None, actor: str | None = None) -> GateResult:
+    cat = catalog or connect()
+    res = check(step, charter_path, cat)
+    cid, ver, unmet, msv = res.charter_id, res.charter_version, res.unmet, res.metric_set_version
     audit(cat, "charter.gate", actor=actor, charter_id=cid, charter_version=ver, step=step,
           result="passed" if res.passed else "failed", details={"unmet": unmet, "metric_set_version": msv})
     return res

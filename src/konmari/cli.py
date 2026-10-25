@@ -8,6 +8,7 @@ from pathlib import Path
 
 import yaml
 
+from konmari import guided
 from konmari import versions as v
 from konmari.canonical import dump_yaml, load_yaml
 from konmari.catalog import audit_change, connect
@@ -184,6 +185,12 @@ def charter_gate(a, cat_url):
     for u in [] if a.json else res.unmet:
         print(f"unmet: {u}", file=sys.stderr)
     return 0 if res.passed else 1
+
+
+def next_step(a, cat_url):
+    rep = guided.report(cat_url)
+    print(json.dumps(rep, indent=2, ensure_ascii=False) if a.json else guided.render(rep), end="\n" if a.json else "")
+    return 0
 
 
 # ---------------------------------------------------------------- metrics
@@ -1488,6 +1495,10 @@ def build_parser() -> argparse.ArgumentParser:
     q = cmd(chs, "gate", charter_gate, "readiness gate for a KonMari step (exit 0 = pass)")
     q.add_argument("--step", required=True, choices=STEPS)
     q.add_argument("--json", action="store_true")
+
+    q = groups.add_parser("next", help="where the pilot stands and the next command(s); read-only")
+    q.add_argument("--json", action="store_true")
+    q.set_defaults(fn=next_step)
 
     me = groups.add_parser("metrics", help="success metrics: definitions, baselines, measurements, report")
     mes = me.add_subparsers(dest="cmd", required=True)

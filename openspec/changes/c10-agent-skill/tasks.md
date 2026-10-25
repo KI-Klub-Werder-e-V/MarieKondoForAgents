@@ -1,13 +1,13 @@
 ## 1. Pure gate check
 
-- [ ] 1.1 Split `charter.gate.gate()` into `check()` (pure) and `gate()` (check + audit); test: existing gate tests stay green
+- [x] 1.1 Split `charter.gate.gate()` into `check()` (pure) and `gate()` (check + audit); test: existing gate tests stay green
 
 ## 2. konmari next
 
-- [ ] 2.1 Implement `konmari.guided.report()` for charter, metric set and baselines with approvers from the charter; tests: No charter yet, Invalid charter lists every error, Charter waiting for approval, Metric set waiting for approval, Missing baselines flagged as input
-- [ ] 2.2 Add the inventory part (sources, scan/import, record completeness, assignment, order, handoff); tests: Unregistered charter sources come first, Category order approval names the category approver
-- [ ] 2.3 Add the per-category step report for score … evaluate; tests: Categories in the approved order, Step completion names the category approver
-- [ ] 2.4 Add `konmari next [--json]` to the CLI, read-only, no catalog creation, exit 0; tests: No audit events or state written, Exit code zero while blocked, JSON shape; one Postgres variant
+- [x] 2.1 Implement `konmari.guided.report()` for charter, metric set and baselines with approvers from the charter; tests: No charter yet, Invalid charter lists every error, Charter waiting for approval, Metric set waiting for approval, Missing baselines flagged as input
+- [x] 2.2 Add the inventory part (sources, scan/import, record completeness, assignment, order, handoff); tests: Unregistered charter sources come first, Category order approval names the category approver
+- [x] 2.3 Add the per-category step report for score … evaluate; tests: Categories in the approved order, Step completion names the category approver
+- [x] 2.4 Add `konmari next [--json]` to the CLI, read-only, no catalog creation, exit 0; tests: No audit events or state written, Exit code zero while blocked, JSON shape; one Postgres variant
 
 ## 3. Skill and plugin
 

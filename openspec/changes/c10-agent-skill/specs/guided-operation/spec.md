@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Read-only next-step report
-`konmari next [--charter FILE] [--metrics FILE] [--json]` SHALL report where the pilot stands and what to do next without changing any state: it MUST NOT write audit events, versions, approvals, measurements, category rows or step states, and it MUST NOT create a DuckDB catalog file that does not exist yet. It SHALL exit 0 whatever the pilot state is, and 2 on a usage error.
+`konmari next [--json]`, run in the pilot folder (`charter.yaml`, `metrics.yaml`), SHALL report where the pilot stands and what to do next without changing any state: it MUST NOT write audit events, versions, approvals, measurements, category rows or step states, and it MUST NOT create a DuckDB catalog file that does not exist yet. It SHALL exit 0 whatever the pilot state is, and 2 on a usage error.
 
 #### Scenario: No audit events or state written
 - **WHEN** `konmari next` runs against a pilot catalog in any state
