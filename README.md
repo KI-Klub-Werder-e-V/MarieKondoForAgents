@@ -131,35 +131,15 @@ etwas gebracht hat. Wie es weitergeht, steht Schritt für Schritt in der
 Gearbeitet wird auf der Kommandozeile. Für die Freigaben braucht es keine Programmierkenntnisse,
 aber jemanden, der die Befehle ausführt.
 
-## Ehrlicher Stand
+## Ausprobieren und Erfahrungen teilen
 
-Das Projekt ist jung (Version 0.1, Oktober 2026). Es wurde spezifikationsgetrieben mit
-[OpenSpec](https://github.com/Fission-AI/OpenSpec) gebaut: neun Changes, jeder mit
-Anforderungen, Szenarien und Recherche-Notizen samt Quellen in [`research/`](research/).
+Nehmt euch einen kleinen Anwendungsfall und eine Kopie eurer Daten, und los geht's. Gebaut wurde
+das Kit spezifikationsgetrieben mit [OpenSpec](https://github.com/Fission-AI/OpenSpec): neun
+Schritte, jeder mit Anforderungen, Tests und Recherche samt Quellen in [`research/`](research/).
 
-**Gebaut und getestet**
-
-- Alle neun Schritte sind umgesetzt, von der Charta bis zur Überwachung: 22 Befehlsgruppen,
-  686 automatische Tests (DuckDB und Postgres 16), jedes Spec-Szenario mit eigenem Test.
-- Jeder Schritt wurde nach dem Bauen von einem unabhängigen Prüfdurchlauf gegen die Spezifikation
-  gelesen; dabei wurden 6 echte Fehler gefunden und behoben, darunter einer, bei dem gelöschte
-  Daten beim nächsten Scan wieder aufgetaucht wären.
-- Drei Aufgaben sind bewusst offen: ein optionaler Debezium-Adapter für Echtzeit-Änderungen,
-  die Abstimmung einer Schnittstelle zwischen den Schritten und ein Test der Anleitung durch
-  eine Person ohne Programmierkenntnisse.
-
-**Noch nicht erprobt**
-
-- Kein Lauf gegen echte Systeme. SharePoint, CRM, Netzlaufwerke und Modelle sind gegen
-  Attrappen getestet. Empfehlung: zuerst mit einer Kopie und einem kleinen Anwendungsfall.
-- Die Schwellenwerte (zum Beispiel ab wann zwei Texte Dubletten sind) sind begründete
-  Annahmen aus der Recherche, keine Messwerte. Sie sollen nach dem ersten Pilot kalibriert werden.
-- Das deutsche spaCy-Modell `de_core_news_lg` wird in den Tests nicht geladen.
-
-**Datenschutz**
-
-Das Kit hilft beim Nachweis, ersetzt aber keine datenschutzrechtliche Prüfung. Die Charta
-fragt DSFA und Einstufung nach EU AI Act ab und blockiert die Freigabe, solange sie offen sind.
+Was bei euch geklappt hat und wo es geklemmt hat, gehört ins Repo:
+**[Pilot-Bericht schreiben](https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/issues/new?template=pilot.yml)**. Aus diesen Berichten kalibrieren wir Schwellenwerte, Beispiele
+und Anleitungen für alle.
 
 ## Mitmachen
 

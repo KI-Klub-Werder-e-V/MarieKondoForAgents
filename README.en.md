@@ -131,34 +131,14 @@ walkthrough continues in the [guide](docs/guide.en.md). Every command at a glanc
 It runs on the command line. Approvals need no programming skills, but someone has to run the
 commands.
 
-## Honest status
+## Try it and share your experience
 
-The project is young (version 0.1, October 2026). It was built spec-first with
-[OpenSpec](https://github.com/Fission-AI/OpenSpec): nine changes, each with requirements,
-scenarios and research notes with sources in [`research/`](research/).
+Pick a small use case and a copy of your data, and go. The kit was built spec-first with
+[OpenSpec](https://github.com/Fission-AI/OpenSpec): nine steps, each with requirements, tests and
+research with sources in [`research/`](research/).
 
-**Built and tested**
-
-- All nine steps are implemented, from charter to monitoring: 22 command groups, 686 automated
-  tests (DuckDB and Postgres 16), every spec scenario with its own test.
-- After each step was built, an independent verification pass read it against the spec and
-  found and fixed 6 real bugs, including one where erased data would have reappeared on the
-  next scan.
-- Three tasks are deliberately open: an optional Debezium adapter for real-time changes, a
-  sign-off on one interface between steps, and a review of the guide by a non-developer.
-
-**Not yet proven**
-
-- No run against real systems. SharePoint, CRM, file shares and models are tested against fakes.
-  Start with a copy and one small use case.
-- Thresholds (such as when two texts count as duplicates) are reasoned assumptions from the
-  research, not measurements. Calibrate them after the first pilot.
-- The German spaCy model `de_core_news_lg` is not loaded in tests.
-
-**Data protection**
-
-The kit helps you document compliance; it does not replace a legal review. The charter asks for
-the DPIA and EU AI Act classification and blocks approval while they are open.
+Tell us what worked and where it got stuck: **[write a pilot report](https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/issues/new?template=pilot.yml)**. Those reports are
+how we calibrate thresholds, examples and guides for everyone.
 
 ## Contributing
 
