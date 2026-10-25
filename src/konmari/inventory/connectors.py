@@ -249,7 +249,10 @@ class FileShare:
     def __init__(self, locator: str, username: str | None = None, password: str | None = None):
         self.locator = locator
         if locator.startswith(("smb://", "\\\\")):
-            import smbclient  # optional extra: pip install konmari[smb]
+            try:
+                import smbclient  # optional extra: pip install konmari[smb]
+            except ImportError:
+                raise ValueError(f"{locator}: SMB shares need the smb extra (uv sync --extra smb)") from None
 
             self.root = "\\\\" + locator.removeprefix("smb://").lstrip("\\").replace("/", "\\")
             server = self.root.lstrip("\\").split("\\")[0]

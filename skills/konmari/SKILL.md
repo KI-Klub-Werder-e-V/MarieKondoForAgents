@@ -25,7 +25,8 @@ what it means for the agent, what the user has to decide.
 ## Setup
 
 1. Find the CLI:
-   - Inside a clone of `KI-Klub-Werder-e-V/MarieKondoFuerAgenten`: `uv sync`, then `uv run konmari ...`.
+   - With a local clone of `KI-Klub-Werder-e-V/MarieKondoFuerAgenten`: `uv sync` in the clone, then
+     `uv run --project <clone> konmari ...` (works from the pilot folder; plain `uv run` only inside the clone).
    - Anywhere else: `uvx --from git+https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten konmari ...`.
      Needs Python 3.12 and [uv](https://docs.astral.sh/uv/). In this file `konmari` stands for
      whichever of the two you use.
@@ -36,7 +37,8 @@ what it means for the agent, what the user has to decide.
    `<you>` in legwork commands. If they are not in the register yet, they are added while drafting
    the charter.
 4. To learn the steps on fictional data first, copy `examples/verein-faq-assistant/` from the
-   repository into a temp folder and run the loop there.
+   repository into a temp folder and run the loop there. Its `office-share` source is a fictional SMB
+   share, so the inventory stops at that scan; `fee-rules` (csv-import) imports fine.
 
 ## The loop
 
@@ -60,8 +62,9 @@ Then:
 
 1. Run `konmari next --json`.
 2. Read the reference for the step (`references/0N-<step>.md`) the first time you reach it.
-3. Do the item: fill placeholders, run the `ready` commands, read their output and the step's
-   report, explain it to the user. For `needs_input` and `needs_approval` follow the rules below.
+3. Do the item: fill placeholders, run the `ready` commands `next` printed (not others from the
+   reference: e.g. `next` picks `inventory import` or `scan` per connector), read their output and
+   the step's report, explain it to the user. For `needs_input` and `needs_approval` follow the rules below.
 4. Run `konmari next --json` again. Repeat.
 
 Never skip ahead of `next`, never work around a refused command. A refusal (exit 1, `error: ...`)

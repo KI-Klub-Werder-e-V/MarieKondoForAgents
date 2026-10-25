@@ -693,3 +693,12 @@ def test_csv_import_template_is_valid():
     tpl = Path(__file__).parent.parent / "examples" / "verein-faq-assistant" / "exports" / "fee-rules.csv"
     assets, errors = inv.parse_import(tpl)
     assert errors == [] and len(assets) == 2
+
+
+def test_smb_without_extra_is_a_clean_error():
+    import importlib.util
+
+    if importlib.util.find_spec("smbclient"):
+        pytest.skip("smb extra installed")
+    with pytest.raises(ValueError, match="uv sync --extra smb"):
+        cn.FileShare("smb://nas.example.org/office/faq")
