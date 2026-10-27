@@ -7,7 +7,7 @@ from konmari.charter.store import Scope
 from konmari.inventory.lineage import PRODUCER, SPEC, namespace
 
 STEP = "discard"
-FACET = "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/facets/DiscardDatasetFacet.json"
+FACET = "https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/facets/DiscardDatasetFacet.json"
 
 
 def log(cat: Catalog, sc: Scope, event: str, item_id, prior_state, new_state, actor: str, result="recorded",

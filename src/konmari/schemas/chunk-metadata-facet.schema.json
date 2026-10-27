@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/blob/v0.1.0/src/konmari/schemas/chunk-metadata-facet.schema.json",
+  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/blob/v0.1.0/src/konmari/schemas/chunk-metadata-facet.schema.json",
   "title": "konmari_chunkMetadata dataset facet 1-0-0",
   "description": "Custom OpenLineage dataset facet: the KonMari metadata envelope summary of one enriched item or table.",
   "type": "object",

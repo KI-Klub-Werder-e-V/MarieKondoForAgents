@@ -1,15 +1,15 @@
 <p align="center"><img src="docs/assets/banner-en.png" alt="A heap of tilted files such as angebot_final_v3(2).docx and kunden_ALT.xlsx on the left; the same data standing upright in a box on the right, each labelled with category, owner and date." width="100%"></p>
 
 <p align="center">
-  <a href="https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/releases"><img alt="Release" src="https://img.shields.io/github/v/release/KI-Klub-Werder-e-V/MarieKondoFuerAgenten?color=1a7a83"></a>
+  <a href="https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/releases"><img alt="Release" src="https://img.shields.io/github/v/release/KI-Klub-Werder-e-V/MarieKondoForAgents?color=1a7a83"></a>
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-1a7a83"></a>
   <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-1a7a83">
   <a href="#quick-start-with-claude-code"><img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude_Code-plugin-1a7a83"></a>
   <img alt="MCP server" src="https://img.shields.io/badge/MCP-server-1a7a83">
 </p>
 
-# MarieKondo&shy;FürAgenten
+# MarieKondo&shy;ForAgents
 
 **Make your organisation's data agent-ready, the KonMari way.**
 
@@ -27,7 +27,7 @@ gated, every decision is made by a named person and logged, and every change can
 ## Quick start with Claude Code
 
 ```
-/plugin marketplace add KI-Klub-Werder-e-V/MarieKondoFuerAgenten
+/plugin marketplace add KI-Klub-Werder-e-V/MarieKondoForAgents
 /plugin install konmari@konmari-kit
 ```
 
@@ -43,8 +43,8 @@ Requires Python 3.12 and [uv](https://docs.astral.sh/uv/). Details: [`docs/agent
 <summary><b>Command line only</b></summary>
 
 ```bash
-git clone https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten
-cd MarieKondoFuerAgenten && uv sync
+git clone https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents
+cd MarieKondoForAgents && uv sync
 cd examples/verein-faq-assistant          # fictional sports club, FAQ assistant
 
 uv run konmari next                       # where are we, what's next
@@ -133,7 +133,7 @@ Every asset is scored 0–3 on six criteria, with evidence:
 
 ## Contributing
 
-The most useful contribution is a **[pilot report](https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/issues/new?template=pilot.yml)**:
+The most useful contribution is a **[pilot report](https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/issues/new?template=pilot.yml)**:
 which use case, which systems, how far you got and where it got stuck. Connectors (Nextcloud,
 Confluence, Google Drive, more CRMs), examples and translations are welcome too.
 

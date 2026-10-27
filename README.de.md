@@ -1,6 +1,6 @@
 <p align="center"><img src="docs/assets/banner.png" alt="Links ein Haufen schief liegender Dateien wie angebot_final_v3(2).docx und kunden_ALT.xlsx, rechts dieselben Daten aufrecht in einer Box, jede mit Kategorie, verantwortlicher Person und Datum beschriftet." width="100%"></p>
 
-# MarieKondo&shy;FürAgenten
+# MarieKondo&shy;ForAgents
 
 **Daten agententauglich machen, nach der KonMari-Methode.**
 
@@ -19,7 +19,7 @@ wird protokolliert und lässt sich rückgängig machen.
 ## Schnellstart mit Claude Code
 
 ```
-/plugin marketplace add KI-Klub-Werder-e-V/MarieKondoFuerAgenten
+/plugin marketplace add KI-Klub-Werder-e-V/MarieKondoForAgents
 /plugin install konmari@konmari-kit
 ```
 
@@ -35,8 +35,8 @@ Voraussetzungen: Python 3.12 und [uv](https://docs.astral.sh/uv/). Mehr in [`doc
 <summary><b>Nur Kommandozeile</b></summary>
 
 ```bash
-git clone https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten
-cd MarieKondoFuerAgenten && uv sync
+git clone https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents
+cd MarieKondoForAgents && uv sync
 cd examples/verein-faq-assistant          # erfundener Sportverein mit FAQ-Assistent
 
 uv run konmari next                       # Stand und nächster Schritt
@@ -125,7 +125,7 @@ Jedes Asset bekommt 0 bis 3 Punkte je Kriterium, mit Belegen:
 
 ## Mitmachen
 
-Am meisten hilft ein **[Pilot-Bericht](https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/issues/new?template=pilot.yml)**:
+Am meisten hilft ein **[Pilot-Bericht](https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/issues/new?template=pilot.yml)**:
 welcher Anwendungsfall, welche Systeme, wie weit ihr gekommen seid und wo es geklemmt hat.
 Konnektoren (Nextcloud, Confluence, Google Drive, weitere CRMs), Beispiele und Übersetzungen
 sind ebenfalls willkommen. Siehe [`CONTRIBUTING.md`](CONTRIBUTING.md).

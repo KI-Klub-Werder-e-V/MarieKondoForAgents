@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/schemas/metrics.schema.json",
+  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/schemas/metrics.schema.json",
   "title": "KonMari-Kit success metrics",
   "type": "object",
   "additionalProperties": false,

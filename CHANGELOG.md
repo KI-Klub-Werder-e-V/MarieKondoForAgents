@@ -18,4 +18,4 @@ First public release.
 - Fictional example pilot `examples/verein-faq-assistant`.
 - Guides in English and German, OpenSpec specs for every step, research notes with sources.
 
-[0.1.0]: https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/releases/tag/v0.1.0
+[0.1.0]: https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/releases/tag/v0.1.0

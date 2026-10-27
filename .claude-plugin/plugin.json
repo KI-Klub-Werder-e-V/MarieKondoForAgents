@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "description": "Make one pilot use case's data agent-ready: Claude operates the deterministic KonMari-Kit CLI step by step (charter, inventory, joy test, discard, normalize, enrich, govern, MCP server, evaluation), and the people the charter names make every decision.",
   "author": { "name": "KI Klub Werder e.V.", "url": "https://github.com/KI-Klub-Werder-e-V" },
-  "homepage": "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten",
-  "repository": "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten",
+  "homepage": "https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents",
+  "repository": "https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents",
   "license": "Apache-2.0",
   "keywords": ["data-readiness", "konmari", "mcp", "rag", "gdpr", "data-governance"]
 }

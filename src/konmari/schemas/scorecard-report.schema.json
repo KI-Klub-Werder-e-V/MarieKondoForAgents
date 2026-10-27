@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/schemas/scorecard-report.schema.json",
+  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/schemas/scorecard-report.schema.json",
   "title": "KonMari-Kit joy test scorecard report",
   "type": "object",
   "required": ["charter_id", "charter_version", "run_id", "rubric_version", "generated_at", "config",

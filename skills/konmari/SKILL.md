@@ -25,9 +25,9 @@ what it means for the agent, what the user has to decide.
 ## Setup
 
 1. Find the CLI:
-   - With a local clone of `KI-Klub-Werder-e-V/MarieKondoFuerAgenten`: `uv sync` in the clone, then
+   - With a local clone of `KI-Klub-Werder-e-V/MarieKondoForAgents`: `uv sync` in the clone, then
      `uv run --project <clone> konmari ...` (works from the pilot folder; plain `uv run` only inside the clone).
-   - Anywhere else: `uvx --from git+https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten konmari ...`.
+   - Anywhere else: `uvx --from git+https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents konmari ...`.
      Needs Python 3.12 and [uv](https://docs.astral.sh/uv/). In this file `konmari` stands for
      whichever of the two you use.
 2. One working folder per pilot, e.g. `~/konmari/<pilot-name>/`. Run every command from there. It holds

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/schemas/golden-set.schema.json",
+  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/schemas/golden-set.schema.json",
   "title": "KonMari-Kit golden question set",
   "type": "object",
   "additionalProperties": false,

@@ -1,7 +1,7 @@
 schema: spec-driven
 
 context: |
-  Project: MarieKondoFürAgenten ("KonMari-Kit"), open-source software published by the
+  Project: MarieKondoForAgents ("KonMari-Kit"), open-source software published by the
   KI Klub Werder e.V. GitHub organization (non-profit association, community maintained).
   A toolkit plus repeatable method that makes ONE pilot use case's organizational data agent-ready
   (KonMari for data: commit, imagine the ideal, discard first, tidy by category, sensible order,

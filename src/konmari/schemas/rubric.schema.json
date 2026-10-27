@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/schemas/rubric.schema.json",
+  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/schemas/rubric.schema.json",
   "title": "KonMari-Kit readiness rubric",
   "type": "object",
   "required": ["rubric_version", "scale", "criteria"],

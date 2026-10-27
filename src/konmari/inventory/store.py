@@ -52,7 +52,7 @@ DCAT = {
     "path": "dcat:landingPage",
 }
 JSONLD_CONTEXT = {"dcat": "http://www.w3.org/ns/dcat#", "dcterms": "http://purl.org/dc/terms/",
-                  "konmari": "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/ns#"}
+                  "konmari": "https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/ns#"}
 
 
 def valid_frequency(v) -> bool:

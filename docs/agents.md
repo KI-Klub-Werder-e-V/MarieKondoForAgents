@@ -10,12 +10,12 @@ the people your charter names decide.
 In Claude Code:
 
 ```
-/plugin marketplace add KI-Klub-Werder-e-V/MarieKondoFuerAgenten
+/plugin marketplace add KI-Klub-Werder-e-V/MarieKondoForAgents
 /plugin install konmari@konmari-kit
 ```
 
 You need Python 3.12 and [uv](https://docs.astral.sh/uv/). Claude runs the CLI with
-`uvx --from git+https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten konmari` (or
+`uvx --from git+https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents konmari` (or
 `uv run konmari` inside a clone), so there is nothing else to install.
 
 Open Claude Code in an empty folder for your pilot and say what you want: "Räum unsere Daten

@@ -10,7 +10,7 @@ from pathlib import Path
 
 from konmari.catalog import now
 
-PRODUCER = "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten"
+PRODUCER = "https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents"
 SPEC = "https://openlineage.io/spec/2-0-2/OpenLineage.json#/definitions/DatasetEvent"
 OWNERSHIP = "https://openlineage.io/spec/facets/1-0-1/OwnershipDatasetFacet.json"
 SCHEMA = "https://openlineage.io/spec/facets/1-1-1/SchemaDatasetFacet.json"

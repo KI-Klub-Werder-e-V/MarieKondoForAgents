@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/schemas/charter.schema.json",
+  "$id": "https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/schemas/charter.schema.json",
   "title": "KonMari-Kit pilot charter",
   "type": "object",
   "additionalProperties": false,

@@ -22,7 +22,7 @@ The skill SHALL state as a hard rule that a command whose `--as` records an appr
 - **THEN** it contains the approval protocol section, the handoff note rule and the rule against invented values
 
 ### Requirement: Installable from git
-The package SHALL build as a wheel that contains the CLI, its migrations, schemas and charter templates, so `uvx --from git+https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten konmari` works outside a clone.
+The package SHALL build as a wheel that contains the CLI, its migrations, schemas and charter templates, so `uvx --from git+https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents konmari` works outside a clone.
 
 #### Scenario: Wheel contains the CLI and its data files
 - **WHEN** the wheel is built with `uv build`

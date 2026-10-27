@@ -15,7 +15,7 @@ agent registered in step 7 (`konmari govern agent <agent> --scope read:<category
 claude mcp add konmari-<pilot> --scope local \
   -e KONMARI_AGENT=<agent> -e KONMARI_ON_BEHALF_OF=<stakeholder id> \
   -e KONMARI_SCOPES=product:<product>:read \
-  -- sh -c 'cd /path/to/pilot && exec uvx --from git+https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten konmari serve --stdio'
+  -- sh -c 'cd /path/to/pilot && exec uvx --from git+https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents konmari serve --stdio'
 ```
 
 Inside a clone use `uv run --project /path/to/clone konmari serve --stdio` after the `cd`. Add

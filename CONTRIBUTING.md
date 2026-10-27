@@ -5,7 +5,7 @@ Issues and pull requests are welcome in English or German.
 ## What helps most
 
 1. **Pilot reports.** Tried the kit on a real use case? Open a
-   [pilot report](https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/issues/new?template=pilot.yml),
+   [pilot report](https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/issues/new?template=pilot.yml),
    including failed attempts. No real personal data.
 2. **Connectors** for more systems: Nextcloud, Confluence, Google Drive, CRMs.
 3. **Examples and translations**, especially German test data without personal data.
