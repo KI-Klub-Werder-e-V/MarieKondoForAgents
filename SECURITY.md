@@ -1,24 +1,17 @@
-# Sicherheit / Security
+# Security policy
 
-Das KonMari-Kit verarbeitet Berechtigungen und personenbezogene Daten. Sicherheitslücken nehmen
-wir deshalb besonders ernst.
+The KonMari-Kit handles permissions and personal data, so security reports get priority.
 
-**Bitte melde Sicherheitslücken nicht als öffentliches Issue**, sondern über
-[GitHub Private Vulnerability Reporting](https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/security/advisories/new)
-oder per E-Mail an admin@ki-klub-werder.de. Wir bestätigen den Eingang innerhalb von 7 Tagen.
-Das Projekt wird ehrenamtlich gepflegt; einen festen Zeitrahmen für die Behebung können wir
-nicht zusagen, halten dich aber auf dem Laufenden.
+**Do not open a public issue for a vulnerability.** Use
+[private vulnerability reporting](https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/security/advisories/new)
+or email admin@ki-klub-werder.de. We acknowledge reports within 7 days. The project is run by
+volunteers, so we cannot promise a fixed remediation time, but we will keep you updated.
 
-Besonders interessant sind:
+Of particular interest:
 
-- Wege, auf denen ein Agent über den MCP-Server Daten sieht, die ihm laut Richtlinie oder
-  Quellberechtigung nicht zustehen
-- Lücken in der Maskierung personenbezogener Daten
-- Manipulationen am Prüfprotokoll, die `konmari audit verify` nicht erkennt
-- Geheimnisse (Passwörter, Tokens), die im Katalog oder in Logs landen
+- an agent seeing data through the MCP server that its policy or the source permissions deny
+- gaps in PII masking
+- audit-trail tampering that `konmari audit verify` does not detect
+- secrets (passwords, tokens) ending up in the catalog or in logs
 
-Unterstützt wird jeweils nur der aktuelle Stand von `main`.
-
-**English:** please do not open public issues for vulnerabilities. Use GitHub private
-vulnerability reporting or email admin@ki-klub-werder.de. We acknowledge within 7 days; the
-project is volunteer-run, so no fixed remediation timeline. Only `main` is supported.
+Only the latest `main` is supported.

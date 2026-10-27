@@ -1,14 +1,14 @@
-## Was ändert sich? / What changes?
+## What changes
 
-<!-- Kurz. Bei Verhaltensänderungen: welcher OpenSpec-Change? -->
+<!-- One or two sentences. For behaviour changes: which OpenSpec change? -->
 
-OpenSpec-Change: `openspec/changes/<name>` (oder: reine Fehlerbehebung, keine Anforderung geändert)
+OpenSpec change: `openspec/changes/<name>` (or: bug fix, no requirement changed)
 
-## Prüfung / Checks
+## Checklist
 
-- [ ] `uv run pytest -q` ist grün
-- [ ] `openspec validate --all --strict` ist grün
-- [ ] Jedes neue oder geänderte Szenario hat einen Test, der das THEN prüft
-- [ ] Keine echten personenbezogenen oder vertraulichen Daten
-- [ ] Neue Schwellenwerte haben eine Quelle oder sind in `research/` als Annahme markiert
-- [ ] Anleitung (`docs/*-guide.*.md`) und `docs/cli.de.md` angepasst, falls Befehle sich ändern
+- [ ] `uv run pytest -q` passes
+- [ ] `openspec validate --all --strict` passes
+- [ ] Every new or changed scenario has a test that asserts its THEN clause
+- [ ] No real personal or confidential data
+- [ ] New thresholds have a source or are marked as a default in `research/`
+- [ ] Guides (`docs/*-guide.*.md`) and `docs/cli.md` updated if commands changed

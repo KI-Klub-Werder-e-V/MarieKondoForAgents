@@ -1,7 +1,7 @@
 # Working in this repo
 
 The KonMari-Kit makes one pilot use case's data agent-ready: charter → inventory → joy test →
-discard → normalize → enrich → govern → connect (MCP) → evaluate. Read `README.en.md` for what it
+discard → normalize → enrich → govern → connect (MCP) → evaluate. Read `README.md` for what it
 does and `openspec/ROADMAP.md` for how the nine steps fit together.
 
 ## Commands
@@ -31,7 +31,7 @@ The catalog defaults to `.konmari/catalog.duckdb`; set `KONMARI_CATALOG=postgres
 - PII detection runs locally. No real personal data in tests, fixtures or examples.
 - External systems (SharePoint, CRMs, models) sit behind a small interface with a fake adapter;
   tests never call real services.
-- Every `konmari …` command in `skills/**/*.md` and `docs/cli.de.md` must exist in the parser
+- Every `konmari …` command in `skills/**/*.md` and `docs/cli.md` and `docs/cli.de.md` must exist in the parser
   (`tests/test_skill_commands.py`). `konmari next` stays read-only: no audit events, no writes.
 - Thresholds are named, versioned config values with a source or an "assumption" note in
   `research/`.

@@ -4,6 +4,15 @@ version = "0.1.0"
 description = "KonMari-Kit: make one pilot use case's organizational data agent-ready"
 readme = "README.md"
 license = "Apache-2.0"
+authors = [{ name = "KI Klub Werder e.V.", email = "admin@ki-klub-werder.de" }]
+keywords = ["ai-agents", "agent-ready-data", "data-quality", "data-governance", "mcp", "rag", "gdpr", "konmari"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Information Technology",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 requires-python = ">=3.12"
 dependencies = [
     "datacontract-cli==1.2.7",
@@ -36,6 +45,11 @@ s3 = ["boto3==1.43.118"]
 docling = ["docling==2.135.0"]
 unstructured = ["unstructured==0.27.10"]
 ragas = ["ragas==0.4.3", "langchain-community==0.3.31"]  # ragas 0.4.3 imports a module removed in langchain-community 0.4
+
+[project.urls]
+Homepage = "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten"
+Issues = "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/issues"
+Changelog = "https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/blob/main/CHANGELOG.md"
 
 [project.scripts]
 konmari = "konmari.cli:main"

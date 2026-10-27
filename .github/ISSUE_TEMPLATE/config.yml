@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
-  - name: Sicherheitslücke melden / Report a vulnerability
+  - name: Report a vulnerability
     url: https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/security/advisories/new
-    about: Bitte nicht öffentlich. Please report privately.
+    about: Please report privately, not as an issue.

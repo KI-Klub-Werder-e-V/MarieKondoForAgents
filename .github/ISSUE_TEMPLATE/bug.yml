@@ -1,21 +1,21 @@
-name: Fehler melden / Bug report
-description: Etwas funktioniert nicht wie beschrieben. Something does not work as documented.
+name: Bug report
+description: Something does not work as documented.
 labels: [bug]
 body:
   - type: markdown
     attributes:
-      value: "Bitte keine echten personenbezogenen oder vertraulichen Daten einfügen. Please do not paste real personal or confidential data. Sicherheitslücken bitte über SECURITY.md melden."
+      value: "Do not paste real personal or confidential data. Report vulnerabilities via SECURITY.md. English or German is fine."
   - type: input
     id: command
-    attributes: {label: "Befehl / Command", placeholder: "uv run konmari discard execute --as ben"}
+    attributes: {label: "Command", placeholder: "uv run konmari discard execute --as ben"}
     validations: {required: true}
   - type: textarea
     id: what
-    attributes: {label: "Was ist passiert, was hast du erwartet? / What happened, what did you expect?"}
+    attributes: {label: "What happened, what did you expect?"}
     validations: {required: true}
   - type: textarea
     id: output
-    attributes: {label: "Ausgabe / Output", render: shell}
+    attributes: {label: "Output", render: shell}
   - type: input
     id: env
-    attributes: {label: "Umgebung / Environment", placeholder: "Version/commit, OS, DuckDB oder Postgres"}
+    attributes: {label: "Environment", placeholder: "version/commit, OS, DuckDB or Postgres"}

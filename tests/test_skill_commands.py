@@ -1,4 +1,4 @@
-"""c10 agent-skill: the skill, its references and docs/cli.de.md only use commands and flags the CLI has."""
+"""c10 agent-skill: the skill, its references, docs/cli.md and docs/cli.de.md only use commands and flags the CLI has."""
 
 import argparse
 import json
@@ -16,7 +16,7 @@ from konmari import guided
 from konmari.cli import build_parser
 
 ROOT = Path(__file__).parent.parent
-DOCS = sorted((ROOT / "skills").rglob("*.md")) + [ROOT / "docs" / "cli.de.md"]
+DOCS = sorted((ROOT / "skills").rglob("*.md")) + [ROOT / "docs" / "cli.md", ROOT / "docs" / "cli.de.md"]
 PLACEHOLDER = re.compile(r"<[^<>\n]*>")
 
 
@@ -74,7 +74,7 @@ ALL = [(f"{p.relative_to(ROOT)}", c) for p in DOCS for c in code_commands(p)] + 
 
 
 def test_every_documented_command_exists_in_the_cli():
-    assert len(ALL) > 150  # skill, references, cli.de.md and the next templates are all read
+    assert len(ALL) > 150  # skill, references, cli.md, cli.de.md and the next templates are all read
     bad = [f"{where}: {cmd}\n    " + "; ".join(errs) for where, cmd in ALL if (errs := problems(cmd))]
     assert not bad, "\n".join(bad)
 

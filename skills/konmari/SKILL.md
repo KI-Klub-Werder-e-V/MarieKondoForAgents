@@ -169,7 +169,7 @@ approver each. Fill `charter.yaml`, run `konmari charter validate`, fix what it 
 | 9 evaluate and monitor | `references/09-evaluate.md` |
 | connect an agent (Claude Code, eval.yaml) | `references/connect-agent.md` |
 
-Full command list: `docs/cli.de.md` in the repository, or `konmari <group> --help`.
+Full command list: `docs/cli.md` in the repository, or `konmari <group> --help`.
 
 ## Stop conditions
 

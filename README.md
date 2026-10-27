@@ -1,194 +1,150 @@
-<p align="center"><img src="docs/assets/banner.png" alt="Links ein Haufen schief liegender Dateien wie angebot_final_v3(2).docx und kunden_ALT.xlsx, rechts dieselben Daten aufrecht in einer Box, jede mit Kategorie, Verantwortlicher Person und Datum beschriftet." width="100%"></p>
+<p align="center"><img src="docs/assets/banner-en.png" alt="A heap of tilted files such as angebot_final_v3(2).docx and kunden_ALT.xlsx on the left; the same data standing upright in a box on the right, each labelled with category, owner and date." width="100%"></p>
 
 <p align="center">
   <a href="https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="LICENSE"><img alt="Lizenz: Apache-2.0" src="https://img.shields.io/badge/Lizenz-Apache--2.0-1a7a83"></a>
-  <img alt="Python 3.12" src="https://img.shields.io/badge/Python-3.12-1a7a83">
-  <img alt="MCP" src="https://img.shields.io/badge/Agenten-MCP-1a7a83">
-  <img alt="DSGVO-bewusst" src="https://img.shields.io/badge/DSGVO-bewusst-1a7a83">
+  <a href="https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/releases"><img alt="Release" src="https://img.shields.io/github/v/release/KI-Klub-Werder-e-V/MarieKondoFuerAgenten?color=1a7a83"></a>
+  <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-1a7a83"></a>
+  <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-1a7a83">
+  <a href="#quick-start-with-claude-code"><img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude_Code-plugin-1a7a83"></a>
+  <img alt="MCP server" src="https://img.shields.io/badge/MCP-server-1a7a83">
 </p>
 
 # MarieKondo&shy;FürAgenten
 
-**Euer Agent ist nur so gut wie die Ablage, aus der er liest.**
+**Make your organisation's data agent-ready, the KonMari way.**
 
-Deutsch · [English](README.en.md)
+English · [Deutsch](README.de.md)
 
-Ein KI-Agent, der auf euer SharePoint, euer CRM und eure Netzlaufwerke losgelassen wird, findet
-dort `angebot_final_v3(2).docx`, drei Preislisten aus drei Jahren und eine Kundentabelle, die
-zuletzt 2021 jemand gepflegt hat. Dann antwortet er überzeugt und falsch. Das liegt selten am
-Modell, sondern meist an den Daten.
+Point an AI agent at a SharePoint, a CRM and a file share and it finds
+`angebot_final_v3(2).docx`, three price lists from three years and a customer table nobody has
+touched since 2021. Then it answers confidently and wrongly.
 
-Das **KonMari-Kit** räumt genau das auf, mit der Methode von Marie Kondo, übersetzt für
-Daten: erst entscheiden, wofür aufgeräumt wird, dann aussortieren, nach Kategorie ordnen,
-jedem Teil einen Platz und eine verantwortliche Person geben und erst danach anschließen.
-Am Ende steht ein MCP-Server, über den eure Agenten nur noch aktuelle, freigegebene, gut
-beschriebene Daten sehen, und der „Ich weiß es nicht“ sagen darf, statt zu raten.
+The KonMari-Kit fixes the data, not the prompt. It takes one use case, discards what doesn't
+belong, sorts the rest by category, gives every item an owner, a definition and the right
+permissions, and serves the result to your agents through a read-only MCP server. Every step is
+gated, every decision is made by a named person and logged, and every change can be undone.
 
-Ein Projekt des [KI Klub Werder e. V.](https://github.com/KI-Klub-Werder-e-V), Apache-2.0.
-
-## Macht es eurem Agenten Freude?
-
-Jede Datei, jede Tabelle und jede Quelle muss durch denselben Test. Sechs Fragen, jede mit
-0 bis 3 Punkten bewertet, mit Belegen:
-
-| Frage | Was das Kit prüft |
-|---|---|
-| Ist es maßgeblich und aktuell? | Änderungsdatum gegen die vereinbarte Aktualisierungsfrequenz, überholte Fassungen |
-| Gehört es jemandem? | eine benannte verantwortliche Person, die es pflegt |
-| Ist die Bedeutung klar? | Spalten und Begriffe stehen im Glossar, nicht nur `kd_st_2` |
-| Findet ein Agent den richtigen Ausschnitt? | sinnvoll geschnittene Textabschnitte, saubere Tabellenschemata |
-| Sind Widersprüche geklärt? | Regel, welche Quelle bei Konflikten gewinnt |
-| Sind die Rechte klar? | Berechtigungen der Quelle reisen mit den Daten bis in den Index |
-
-Das Ergebnis ist ein Vorschlag **behalten**, **reparieren** oder **aussortieren**. Den
-Vorschlag bestätigt immer ein Mensch, und jede Entscheidung lässt sich rückgängig machen.
-
-## Vorher und nachher
-
-| | Vorher | Mit dem KonMari-Kit |
-|---|---|---|
-| Format | ganze Dokumente, rohe Tabellen | geschnittene Abschnitte, versionierte Datenprodukte |
-| Metadaten | Dateiname | Quelle, Datum, Typ, verantwortliche Person, Aktualität, Definitionen |
-| Zugriff | alles, was das Dienstkonto sieht | Leserechte je Agent, Rechte der Quelle bleiben erhalten |
-| Widersprüche | Dubletten und drei Wahrheiten | entdoppelt, eine führende Quelle je Feld |
-| Aktualität | „hat das mal jemand aktualisiert?“ | geplante Aktualisierung mit Änderungsverfolgung |
-| Auffindbarkeit | in Silos vergraben | im Katalog beschrieben und per MCP abrufbar |
-
-## So räumt ihr auf
-
-Neun Schritte, immer für **einen** Anwendungsfall, zum Beispiel einen FAQ-Assistenten für
-die Geschäftsstelle. Jeder Schritt prüft, ob der vorige sauber abgeschlossen ist. Das Kit
-lässt euch also nicht anreichern, was ihr noch nicht aussortiert habt.
-
-```
- 1  charter      Wofür räumen wir auf? Anwendungsfall, Rollen, Datenschutz, Erfolgskennzahlen
- 2  inventory    Was liegt wo? Quellen über alle Systeme, sortiert nach Kategorie statt Ablageort
- 3  score        Macht es Freude? Sechs Fragen, Vorschlag behalten / reparieren / aussortieren
- 4  discard      Danke und tschüss: Dubletten, alte Fassungen, Irrelevantes ins Archiv
- 5  normalize    Eine Wahrheit: Datumsangaben, IDs und Namen vereinheitlichen, führende Quelle festlegen
- 6  chunk/enrich Ordnen: Abschnitte schneiden, Metadaten anheften, Glossar pflegen
- 7  govern       Absichern: Rechte, Maskierung personenbezogener Daten, manipulationssicheres Protokoll
- 8  product/serve Anschließen: Datenprodukte und ein MCP-Server nur zum Lesen
- 9  eval/monitor Prüfen: echte Fragen, Belege, Abstinenz, Aktualität laufend überwachen
-```
-
-Die Reihenfolge der Kategorien folgt dem Risiko: erst die öffentliche FAQ, dann die Verträge,
-ganz zum Schluss alles mit besonders schützenswerten Daten nach Art. 9 DSGVO.
-
-## Mit Claude Code (empfohlen)
-
-Am einfachsten räumt ihr mit [Claude Code](https://code.claude.com/) auf. Der Skill `konmari`
-bedient das Kit für euch: Er führt das Gespräch für die Pilot-Charta, registriert Quellen, lässt
-Scans und Prüfungen laufen, liest die Berichte und erklärt sie in einfachen Worten. Entscheiden
-tun weiterhin die Personen, die eure Charta nennt. Vor jeder Freigabe zeigt Claude, worum es geht,
-und fragt nach.
+## Quick start with Claude Code
 
 ```
 /plugin marketplace add KI-Klub-Werder-e-V/MarieKondoFuerAgenten
 /plugin install konmari@konmari-kit
 ```
 
-Dann in einem leeren Ordner für euren Piloten einfach sagen, worum es geht, zum Beispiel:
+Open Claude Code in an empty folder and say what you need:
 
-> Räum unsere Daten für einen FAQ-Agenten in der Geschäftsstelle auf.
+> Tidy our data for an FAQ agent in the club office.
 
-Voraussetzungen: Python 3.12 und [uv](https://docs.astral.sh/uv/). Wie Skill und Kommandozeile
-zusammenarbeiten, steht in [`docs/agents.md`](docs/agents.md).
+Claude interviews you for the charter, registers your sources, runs the scans and checks, and
+explains each report. It stops before every approval and asks the person the charter names.
+Requires Python 3.12 and [uv](https://docs.astral.sh/uv/). Details: [`docs/agents.md`](docs/agents.md).
 
-## Schnellstart auf der Kommandozeile
-
-Voraussetzungen: Python 3.12 und [uv](https://docs.astral.sh/uv/). Das Beispiel ist ein
-erfundener Sportverein mit einem FAQ-Assistenten für die Geschäftsstelle.
+<details>
+<summary><b>Command line only</b></summary>
 
 ```bash
 git clone https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten
 cd MarieKondoFuerAgenten && uv sync
-cd examples/verein-faq-assistant
+cd examples/verein-faq-assistant          # fictional sports club, FAQ assistant
 
-uv run konmari charter validate          # Charta prüfen: Rollen, Datenschutz, Datenumfang
-uv run konmari charter approve --as anna # die verantwortliche Person gibt frei
-uv run konmari metrics validate          # Erfolgskennzahlen und Fragenkatalog prüfen
+uv run konmari next                       # where are we, what's next
+uv run konmari charter validate
+uv run konmari charter approve --as anna
+uv run konmari metrics validate
 uv run konmari metrics approve --as ben
 uv run konmari charter gate --step inventory
 ```
 
-Das letzte Kommando scheitert, und das ist Absicht:
+The gate refuses until every must-have metric has a baseline:
 
 ```
 unmet: metrics: must_have metric 'answer_accuracy' has no baseline or measurement plan
 ```
 
-Ohne Ausgangswert gibt es keinen Aufräumbeginn, denn sonst weiß hinterher niemand, ob es
-etwas gebracht hat. Wie es weitergeht, steht Schritt für Schritt in der
-[Anleitung](docs/guide.de.md). Alle Befehle auf einen Blick: [`docs/cli.de.md`](docs/cli.de.md).
+Continue with the [guide](docs/guide.en.md). All commands: [`docs/cli.md`](docs/cli.md).
 
-## Was drinsteckt
+</details>
 
-- **Ein Katalog für alle Entscheidungen.** DuckDB lokal, Postgres 16 im Betrieb, dieselben
-  Migrationen. Jede Entscheidung mit Person, Rolle, Zeitpunkt und Begründung.
-- **Menschen entscheiden, das Kit schlägt vor.** Aussortieren, Maskieren, Löschen und
-  Veröffentlichen brauchen eine Freigabe der zuständigen Rolle aus der Charta.
-- **Alles umkehrbar, alles protokolliert.** Archiv statt Papierkorb, Wiederherstellen per
-  Befehl, ein hash-verkettetes Prüfprotokoll (`konmari audit verify`).
-- **Dubletten auf drei Ebenen:** identische Dateien, fast gleiche Texte (MinHash) und
-  inhaltlich gleiche Texte (Embeddings, optional).
-- **Datenschutz eingebaut.** Personendaten werden lokal mit Presidio und spaCy erkannt,
-  Löschfristen und Aufbewahrungspflichten je Kategorie, Pseudonymisierung mit Schlüssel statt
-  Rückübersetzungstabelle, Verzeichnis der Verarbeitungstätigkeiten als Export.
-- **Offene Standards statt Eigenbau:** DCAT für das Inventar, OpenLineage für die Herkunft,
-  ODPS und ODCS für Datenprodukte, SKOS für das Glossar, MCP für Agenten.
-- **Selbst gehostet, ohne Pflicht-Cloud.** Modelle für Embeddings und Bewertung laufen lokal;
-  eine gehostete API ist per Konfiguration möglich.
+## How it works
 
-## Für wen ist es gedacht?
+Nine steps for one use case. Each step checks that the previous one is done.
 
-- Vereine, Verbände, kleine und mittlere Unternehmen und Verwaltungen, die einen ersten
-  Agenten auf ihre eigenen Daten loslassen wollen
-- Freiwillige, IT-Verantwortliche und Berater:innen, die so ein Projekt begleiten
-- alle, die vorher wissen wollen, welche Daten der Agent sieht, und das belegen müssen
+| # | Step | Commands | What happens |
+|---|---|---|---|
+| 1 | Commit | `charter` `metrics` | Use case, roles, GDPR/AI Act screening, success metrics with baselines |
+| 2 | Gather by category | `inventory` `categories` | Sources across systems, grouped by category instead of location, ordered by risk |
+| 3 | Spark joy? | `score` `review` | Six-question test per asset, proposal keep / fix / discard |
+| 4 | Discard first | `discard` `retention` | Duplicates, superseded versions, off-scope items to a reversible archive |
+| 5 | One truth | `normalize` `resolve` `policy` `conflicts` | Dates, IDs and names normalised, entities matched, a leading source per field |
+| 6 | Fold | `chunk` `enrich` `glossary` | Structure-aware chunks, metadata on every chunk, approved business glossary |
+| 7 | Secure | `govern` `audit` | Source permissions carried into the index, PII masked, hash-chained audit trail |
+| 8 | Connect | `product` `serve` | Versioned data products and a read-only MCP server |
+| 9 | Check | `eval` `monitor` | Golden questions with citations and abstention, freshness and drift alerts |
 
-Gearbeitet wird mit Claude Code oder direkt auf der Kommandozeile. Für die Freigaben braucht es
-keine Programmierkenntnisse.
+Low-risk categories go first (public FAQ), special-category personal data last.
 
-## Ausprobieren und Erfahrungen teilen
+## The joy test
 
-Nehmt euch einen kleinen Anwendungsfall und eine Kopie eurer Daten, und los geht's. Gebaut wurde
-das Kit spezifikationsgetrieben mit [OpenSpec](https://github.com/Fission-AI/OpenSpec): neun
-Schritte, jeder mit Anforderungen, Tests und Recherche samt Quellen in [`research/`](research/).
+Every asset is scored 0–3 on six criteria, with evidence:
 
-Was bei euch geklappt hat und wo es geklemmt hat, gehört ins Repo:
-**[Pilot-Bericht schreiben](https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/issues/new?template=pilot.yml)**. Aus diesen Berichten kalibrieren wir Schwellenwerte, Beispiele
-und Anleitungen für alle.
+| Criterion | Checked against |
+|---|---|
+| Authoritative and current | last change vs. agreed update frequency, superseded versions |
+| Owned | a named owner who maintains it |
+| Meaning clear | columns and terms defined in the glossary |
+| Retrievable | well-cut passages, clean table schemas |
+| Conflicts resolved | a rule for which source wins |
+| Permissions explicit | source ACLs present and propagated |
 
-## Mitmachen
+| | Before | After |
+|---|---|---|
+| Format | whole documents, raw tables | chunked passages, versioned data products |
+| Metadata | file name | source, date, owner, freshness, definitions |
+| Access | whatever the service account sees | read scopes per agent, source permissions kept |
+| Consistency | duplicates, three versions of the truth | deduplicated, one leading source per field |
+| Freshness | manual, forgotten | scheduled refresh with change tracking |
+| Discoverability | buried in silos | catalogued and callable via MCP |
 
-Gesucht sind vor allem Pilot-Erfahrungen. Wenn ihr das Kit an einem echten Anwendungsfall
-ausprobiert, schreibt uns, was geklemmt hat. Außerdem willkommen: weitere Konnektoren (Nextcloud,
-Confluence, Google Drive, weitere CRMs), bessere deutsche Beispiele und Übersetzungen.
-Fehler und Ideen bitte als [Issue](https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/issues).
+## Features
+
+- **Deterministic engine.** Gates, scoring, deduplication and policies are rules with versioned
+  thresholds. Same inputs, same result. Models are optional and pinned.
+- **Humans approve.** Discarding, masking, erasing and publishing need sign-off from the role the
+  charter names, recorded with identity and time.
+- **Reversible and auditable.** Archive instead of delete, restore by command, a hash-chained audit
+  trail you can verify with `konmari audit verify`.
+- **Duplicates at three levels.** Identical files, near-duplicates (MinHash/LSH), semantic
+  duplicates (embeddings, optional).
+- **GDPR built in.** Local PII detection (Presidio, spaCy), retention rules and legal holds per
+  category, keyed pseudonymisation, record of processing activities export.
+- **Open standards.** DCAT inventory, OpenLineage lineage, ODPS/ODCS data products, SKOS glossary,
+  MCP for agents.
+- **Self-hosted.** DuckDB locally, Postgres 16 in production. No cloud service required.
+
+## Documentation
+
+| | |
+|---|---|
+| Step-by-step guide | [`docs/guide.en.md`](docs/guide.en.md) and one `*-guide.en.md` per step |
+| Command reference | [`docs/cli.md`](docs/cli.md) |
+| Claude Code skill | [`docs/agents.md`](docs/agents.md), [`skills/konmari/`](skills/konmari/) |
+| Specs and roadmap | [`openspec/ROADMAP.md`](openspec/ROADMAP.md), [`openspec/changes/`](openspec/changes/) |
+| Research with sources | [`research/`](research/) |
+
+## Contributing
+
+The most useful contribution is a **[pilot report](https://github.com/KI-Klub-Werder-e-V/MarieKondoFuerAgenten/issues/new?template=pilot.yml)**:
+which use case, which systems, how far you got and where it got stuck. Connectors (Nextcloud,
+Confluence, Google Drive, more CRMs), examples and translations are welcome too.
 
 ```bash
-uv sync && uv run pytest -q              # Tests; Postgres-Tests nutzen KONMARI_TEST_PG_URL oder ein lokales Postgres 16
-openspec validate --all --strict         # Specs prüfen
+uv sync && uv run pytest -q
+openspec validate --all --strict
 ```
 
-Neue Funktionen beginnen als OpenSpec-Change. Wie das geht und welche Regeln für Menschen und
-Agenten gelten, steht in [`CONTRIBUTING.md`](CONTRIBUTING.md) und [`AGENTS.md`](AGENTS.md).
-Echte personenbezogene Daten gehören nie ins Repository.
+Behaviour changes start as an [OpenSpec](https://github.com/Fission-AI/OpenSpec) change. See
+[`CONTRIBUTING.md`](CONTRIBUTING.md) and [`AGENTS.md`](AGENTS.md).
 
-## Dokumentation
+## License
 
-| Thema | Wo |
-|---|---|
-| Anleitung Schritt für Schritt | [`docs/guide.de.md`](docs/guide.de.md) und die `*-guide.de.md` je Schritt |
-| Alle Befehle | [`docs/cli.de.md`](docs/cli.de.md) |
-| Mit Claude Code arbeiten | [`docs/agents.md`](docs/agents.md), Skill in [`skills/konmari/`](skills/konmari/) |
-| Roadmap, Abdeckung, gemeinsames Vokabular | [`openspec/ROADMAP.md`](openspec/ROADMAP.md) |
-| Anforderungen und Entwurf je Schritt | [`openspec/changes/`](openspec/changes/) |
-| Recherche mit Quellen | [`research/`](research/) |
-| Schnittstellen zwischen den Schritten | [`docs/*-contract.md`](docs/) |
-
-## Lizenz
-
-Apache-2.0, siehe [`LICENSE`](LICENSE).
+[Apache-2.0](LICENSE). A project of [KI Klub Werder e. V.](https://ki-klub-werder.de)
