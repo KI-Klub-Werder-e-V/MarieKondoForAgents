@@ -6,6 +6,8 @@
 
 [English](README.md) · Deutsch
 
+> **Status:** Alpha (v0.1.0). Wir suchen Pilot-Organisationen, siehe [Mitmachen](#mitmachen).
+
 Ein KI-Agent auf SharePoint, CRM und Netzlaufwerk findet `angebot_final_v3(2).docx`, drei
 Preislisten aus drei Jahren und eine Kundentabelle, die seit 2021 niemand gepflegt hat. Dann
 antwortet er überzeugt und falsch.
@@ -17,6 +19,8 @@ bereit. Jeder Schritt hat eine Freigabe-Schranke, jede Entscheidung trifft eine 
 wird protokolliert und lässt sich rückgängig machen.
 
 ## Schnellstart mit Claude Code
+
+<p align="center"><img src="docs/assets/demo.gif" alt="Terminal-Demo: konmari next meldet, dass die Charta freigegeben werden muss; anna gibt die Charta frei, ben die Kennzahlen; das Inventur-Gate verweigert, weil vier Pflicht-Kennzahlen keinen Ausgangswert haben." width="720"></p>
 
 ```
 /plugin marketplace add KI-Klub-Werder-e-V/MarieKondoForAgents

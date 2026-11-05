@@ -15,6 +15,8 @@
 
 English · [Deutsch](README.de.md)
 
+> **Status:** alpha (v0.1.0). We are looking for pilot organisations, see [Contributing](#contributing).
+
 Point an AI agent at a SharePoint, a CRM and a file share and it finds
 `angebot_final_v3(2).docx`, three price lists from three years and a customer table nobody has
 touched since 2021. Then it answers confidently and wrongly.
@@ -25,6 +27,8 @@ permissions, and serves the result to your agents through a read-only MCP server
 gated, every decision is made by a named person and logged, and every change can be undone.
 
 ## Quick start with Claude Code
+
+<p align="center"><img src="docs/assets/demo.gif" alt="Terminal demo: konmari next shows the charter needs approval; anna approves the charter, ben approves the metrics; the inventory gate refuses because four must-have metrics have no baseline." width="720"></p>
 
 ```
 /plugin marketplace add KI-Klub-Werder-e-V/MarieKondoForAgents
