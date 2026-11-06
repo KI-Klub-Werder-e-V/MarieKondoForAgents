@@ -1,6 +1,6 @@
 [project]
 name = "konmari"
-version = "0.1.0"
+version = "0.1.1"
 description = "KonMari-Kit: make one pilot use case's organizational data agent-ready"
 readme = "README.md"
 license = "Apache-2.0"

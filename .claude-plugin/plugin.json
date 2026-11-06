@@ -1,6 +1,6 @@
 {
   "name": "konmari",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Make one pilot use case's data agent-ready: Claude operates the deterministic KonMari-Kit CLI step by step (charter, inventory, joy test, discard, normalize, enrich, govern, MCP server, evaluation), and the people the charter names make every decision.",
   "author": { "name": "KI Klub Werder e.V.", "url": "https://github.com/KI-Klub-Werder-e-V" },
   "homepage": "https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents",

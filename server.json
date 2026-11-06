@@ -1,0 +1,73 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.KI-Klub-Werder-e-V/konmari",
+  "title": "KonMari-Kit (MarieKondoForAgents)",
+  "description": "Read-only access to organisational data products that are deduplicated, owned and PII-masked",
+  "version": "0.1.1",
+  "websiteUrl": "https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents",
+  "repository": {
+    "url": "https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents",
+    "source": "github",
+    "id": "1432289292"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "konmari",
+      "version": "0.1.1",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "serve"
+        },
+        {
+          "type": "named",
+          "name": "--charter",
+          "description": "Absolute path to the pilot's charter.yaml",
+          "isRequired": true,
+          "format": "filepath"
+        },
+        {
+          "type": "named",
+          "name": "--config",
+          "description": "Optional: absolute path to the pilot's connect.yaml (defaults apply if absent)",
+          "isRequired": false,
+          "format": "filepath"
+        },
+        {
+          "type": "positional",
+          "value": "--stdio"
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "KONMARI_AGENT",
+          "description": "Agent identity registered with 'konmari govern agent'",
+          "isRequired": true
+        },
+        {
+          "name": "KONMARI_CATALOG",
+          "description": "Catalog URL of the pilot, e.g. duckdb:///path/to/.konmari/catalog.duckdb or postgresql://...",
+          "isRequired": true,
+          "format": "string"
+        },
+        {
+          "name": "KONMARI_ON_BEHALF_OF",
+          "description": "Optional: user the agent acts for (permissions are intersected)"
+        },
+        {
+          "name": "KONMARI_GROUPS",
+          "description": "Optional: comma-separated groups of that user"
+        },
+        {
+          "name": "KONMARI_SCOPES",
+          "description": "Optional: comma-separated read scopes granted to the agent"
+        }
+      ]
+    }
+  ]
+}

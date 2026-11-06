@@ -152,3 +152,5 @@ Behaviour changes start as an [OpenSpec](https://github.com/Fission-AI/OpenSpec)
 ## License
 
 [Apache-2.0](LICENSE). A project of [KI Klub Werder e. V.](https://ki-klub-werder.de)
+
+<!-- mcp-name: io.github.KI-Klub-Werder-e-V/konmari -->

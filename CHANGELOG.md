@@ -2,6 +2,14 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning: [SemVer](https://semver.org/).
 
+## [0.1.1] - unreleased
+
+### Added
+
+- PyPI release workflow (trusted publishing) and `server.json` for the official MCP Registry.
+- `glama.json` for the Glama MCP directory.
+- Status line and terminal demo in the READMEs.
+
 ## [0.1.0] - 2026-10-27
 
 First public release.
@@ -18,4 +26,5 @@ First public release.
 - Fictional example pilot `examples/verein-faq-assistant`.
 - Guides in English and German, OpenSpec specs for every step, research notes with sources.
 
+[0.1.1]: https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/releases/tag/v0.1.1
 [0.1.0]: https://github.com/KI-Klub-Werder-e-V/MarieKondoForAgents/releases/tag/v0.1.0
